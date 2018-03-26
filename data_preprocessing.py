@@ -12,8 +12,8 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import lagrange #导入拉格朗日插值函数
 import math
 
-def preprocess_data(data, sys_settings, data_key='power',
-                    col_sel=None, row_sel=None, v1=None, v2=None, v3=None,
+def preprocess_data(data, sys_settings, col_sel=None, row_sel=None, 
+                    v1=None, v2=None, v3=None,
                       c1=None, c2=None, c3=None):
     '''
     对外部对数据文件进行预处理
@@ -30,7 +30,9 @@ def preprocess_data(data, sys_settings, data_key='power',
     
     load_data = sel_period(load_data)
     
-    load_data = deal_abnormal_data(load_data)
+    load_data = deal_abnormal_data(load_data, sys_settings.calc_para)
+    
+    return load_data
 '''   
  #补齐数据
     if len(load_data) < sys_settings.sample_interval:
@@ -38,7 +40,7 @@ def preprocess_data(data, sys_settings, data_key='power',
         load_data = complete_data(load_data, sys_settings.sample_interval, 
                                   data_key)
 '''    
-    return load_data
+ #   return load_data
 
 def get_pvc_data(data, row_sel=None):
 
@@ -138,6 +140,20 @@ def complete_data(data, sample_interval, data_key):
             
             
     return data
+
+def reset_index(ticks,data):
+    '''重设index'''
+    data['index'] = range(ticks, len(data)+ticks)
+    data = data.set_index(['index'])
+    return data
+
+def data_col_rename(data, n, re):
+    data.rename(columns={n:re}, inplace=True)
+    return data
+
+def data_merge():
+    result = pd.concat([df1, df2, df3], axis=1)
+    result = result[['p1', 'p2', 'p3']]
 
 class Datadiscovery():
     """对数据做简单探索"""

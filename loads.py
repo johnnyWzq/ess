@@ -9,20 +9,29 @@ import pandas as pd
 from data_preprocessing import Datadiscovery
 import data_preprocessing as dp
 from ess_settings import Settings
+import load_manage as lm
 
+global sys_settings
 
 class Loads():
     '''负载'''
-    def __init__(self, sys_settings, load_type=1):
+    def __init__(self, sys_settings, load_num, load_type=1):
         '''负载类型
         '''
-        self.load_type = load_type
-        self.sys_settings = sys_settings
+        if load_num <= sys_settings.charger_nums:
+            self.load_type = load_type
+            self.state = True
+            self.load_num = load_num
+            self.sys_settings = sys_settings
+        else:
+            print("The number of loads is more than the system_setting! ")
+            
         
-    def loading_loads(self, data_file='data/loads_model.xls'):
+    def loading(self, sys_settings, data_file='data/loads_model.xls'):
         '''加载负载数据
         默认为load.xls
         '''
+
         #判断文件类型
         file_type = data_file[-4:]
 
@@ -58,32 +67,38 @@ class Loads():
                 #print(self.load_data)
                 else:
                     print("文件格式错误！")
+                    
+           
         except:
             print("文件读取错误！")
-'''            
+            
+
+"""           
 def loads_calc(sys_ticks, load_pre, load_list, load_regular):
-    """
+    
     计算负载当前时刻值，并返回
     sys_ticks为系统运行至当前采样数
     load_pre为当前时刻前的负载数据
     load_regular为负载调整指令集
-    """
     i = 0
     for load in load_list:
         #将列表里的负载当前时刻的数据进行相加
         load_data[i++] = load.load_data['power']
- '''       
-'''
+""" 
+     
+"""
 test
-'''
+"""
 def main():
-
+    global sys_settings
+    
     sys_settings = Settings()
-    load = Loads(sys_settings)
+    load = Loads(sys_settings, 1)
     file_input = 'data_temp/charging_data1.csv'
     file_output = 'data/charging_data.xls'
     figure_output = 'data/charging_data_'
-    load.loading_loads(file_input)
+    load.loading(sys_settings, file_input)
+
     print(load.load_data)
     load.load_data.to_excel(file_output)
     dd = Datadiscovery(load.load_data)
@@ -91,11 +106,6 @@ def main():
 
     dd.draw_plot('line', u'power', figure_output)
     
-'''
-    for i in range(len(common_kinds)):
-        dd.draw_plot(common_kinds[i], u'power')
-'''
-  #  dd.draw_plot('line', u'power')
     
 if __name__ == '__main__':
     main()

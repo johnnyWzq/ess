@@ -17,7 +17,8 @@ class Settings():
         self.trans_cap = 800
         self.trans_rate = 0.8
         self.trans_limit = self.trans_cap * self.trans_rate
-        
+        #选择哪个参数计算
+        self.calc_para = 'power'
         #充电桩设置
         self.charger_nums = 10
     #    self.charger_pout_max = 50
@@ -38,3 +39,7 @@ class Settings():
         '''初始化系统变量设置'''
         #为1表示给储能充电，-1表示逆变放电
         self.power_direction = 1
+        self.charges_iswork = [0] * 10
+        
+    def update_settings(self, settings):
+        self.power_direction = settings.power_dircetion
