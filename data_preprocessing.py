@@ -6,11 +6,14 @@ Created on Sun Mar 25 13:41:14 2018
 @author: zhiqiangwu
 """
 import time
+
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.interpolate import lagrange #导入拉格朗日插值函数
+import math
 
-def preprocess_data(data, col_sel=None, row_sel=None, v1=None, v2=None, v3=None,
+def preprocess_data(data, sys_settings, data_key='power',
+                    col_sel=None, row_sel=None, v1=None, v2=None, v3=None,
                       c1=None, c2=None, c3=None):
     '''
     对外部对数据文件进行预处理
@@ -28,7 +31,13 @@ def preprocess_data(data, col_sel=None, row_sel=None, v1=None, v2=None, v3=None,
     load_data = sel_period(load_data)
     
     load_data = deal_abnormal_data(load_data)
-    
+'''   
+ #补齐数据
+    if len(load_data) < sys_settings.sample_interval:
+        #利用插值补齐负载采样点
+        load_data = complete_data(load_data, sys_settings.sample_interval, 
+                                  data_key)
+'''    
     return load_data
 
 def get_pvc_data(data, row_sel=None):
@@ -111,6 +120,24 @@ def ployinterp_column(s, n, k=5):
     y = s[list(range(n-k, n)) + list(range(n+1, n+1+k))] #取数
     y = y[y.notnull()] #剔除空值
     return lagrange(y.index, list(y))(n) #插值并返回插值结果
+
+def complete_data(data, sample_interval, data_key):
+    '''
+    均匀补齐数据
+    '''
+    dft = pd.read_excel('data/blank.xls', index_col=0)
+    dft = dft[data_key]
+    numbers = int(sample_interval/len(data)) + 1
+    numbers = int(math.log(numbers, 2)) + 1
+    for i in range(numbers):
+       # data[sel_col][i]
+       df = data[data_key]
+       for j in range(len(df)):
+           dfx = dft.append(df, ignore_index=True)
+            #data[sel_col][j] = ployinterp_column(data[sel_col], j, 2)
+            
+            
+    return data
 
 class Datadiscovery():
     """对数据做简单探索"""

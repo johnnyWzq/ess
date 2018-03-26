@@ -19,7 +19,7 @@ class Settings():
         self.trans_limit = self.trans_cap * self.trans_rate
         
         #充电桩设置
-        self.charger_nums = 2
+        self.charger_nums = 10
     #    self.charger_pout_max = 50
         #逆变器设置
         self.pcs_nums = 1
@@ -29,8 +29,12 @@ class Settings():
         
         #其他设置
         self.power_lose = 0
+        #系统采样时间为1S，1小时3600个采样点
+        self.sample_interval = 3600
+        
+        self.initialize_dynamic_settings()
         
     def initialize_dynamic_settings(self):
         '''初始化系统变量设置'''
-        #为－1表示给储能充电，1表示逆变放电
+        #为1表示给储能充电，-1表示逆变放电
         self.power_direction = 1
