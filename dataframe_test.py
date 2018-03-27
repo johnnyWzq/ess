@@ -38,7 +38,7 @@ df3.loc[1, ['p3']] = 4
 
 df4 = pd.read_excel('data/model.xls', index_col=0)
 df4.rename(columns={'power':'p4'}, inplace=True)
-df4 = reset_index(60, df4)
+#df4 = reset_index(60, df4)
 df4.loc[1, ['p4']] = 6
 
 h = 'p3'
@@ -79,7 +79,6 @@ for i in y:
     print(i)
 
 
-print(list['x','y'])
 #df1['power'] = df3['power'] + df2['power'] #两个series相加
 
 #df1 = df1[['power']] #留下power列
@@ -96,12 +95,6 @@ for i in l:
 '''
 x = 1
 
-def data_col_rename(data, n, re, x):
-    data.rename(columns={n:re}, inplace=False)
-    x= 2
-    return data
-
-df1 = data_col_rename(df1, 'p1', 'cxx', x)
 
 print(df1)
 print(x)
@@ -109,7 +102,55 @@ print(x)
 k = [0] * 4
 k[0],k[2] = 1,1
 
+import math
 
+def insert_data(data, sel_col, n):
+    '''
+    均匀补齐数据
+    '''
+    data0 = data[:]
+    if (n == 0):
+        return data0
+    else:
+        data0['index'] = range(0, 2*len(data0), 2)      
+        data0 = data0.set_index(['index'])
+    
+        df = pd.DataFrame(columns = [sel_col]) #创建代表总负载的dataframe 
+        df['index'] = range(2*len(data0))
+        df = df.set_index(['index'])
+        
+        df = pd.concat([data0, df], axis=1)
+        #留下del_col列表中的数据
+        df = df[sel_col]
+    
+       # s0 = result.loc[[0]]
+        for i in range(2):
+            s0 = df.iloc[:,i] #取指定列
+            if s0[0] != None:
+                df0 = s0
+                break
+    
+        for j in range(len(df0)):
+            if df0.values[j] > 120: #如果为空即插值。
+                df0[j] = ployinterp_column(df0, j, 2)
+        df = df0.to_frame()
+                
+        return insert_data(df, sel_col, n-1)
+
+from scipy.interpolate import lagrange #导入拉格朗日插值函数
+
+def ployinterp_column(s, n, k=2):
+    '''
+    自定义列向量插值函数
+    s为列向量，n为被插值的位置，k为取前后的数据个数，默认为5
+    '''
+    y = s[list(range(n-k, n)) + list(range(n+1, n+1+k))] #取数
+    y = y[y.notnull()] #剔除空值
+    return lagrange(y.index, list(y))(n) #插值并返回插值结果
+            
+
+df4 = df4[0:11]
+df5 = insert_data(df4, 'p4', 3)
 '''
 def data_merge(data1, data2, num):
 

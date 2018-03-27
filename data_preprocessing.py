@@ -119,7 +119,7 @@ def deal_abnormal_data(data, sel_col='power'):
     #逐个元素判断是否需要插值
     for j in range(len(data)):
         if (data[sel_col].isnull())[j]: #如果为空即插值。
-            data[sel_col][j] = ployinterp_column(data[sel_col], j)
+            data[sel_col][j] = ployinterp_column(data[sel_col], j, 3)
     return data
 
 def ployinterp_column(s, n, k=5):
@@ -131,23 +131,48 @@ def ployinterp_column(s, n, k=5):
     y = y[y.notnull()] #剔除空值
     return lagrange(y.index, list(y))(n) #插值并返回插值结果
 
-def complete_data(data, sample_interval, data_key):
+def complete_data(data, sample_interval, sel_col):
     '''
     均匀补齐数据
     '''
-    dft = pd.read_excel('data/blank.xls', index_col=0)
-    dft = dft[data_key]
-    numbers = int(sample_interval/len(data)) + 1
-    numbers = int(math.log(numbers, 2)) + 1
-    for i in range(numbers):
-       # data[sel_col][i]
-       df = data[data_key]
-       for j in range(len(df)):
-           dfx = dft.append(df, ignore_index=True)
-            #data[sel_col][j] = ployinterp_column(data[sel_col], j, 2)
             
             
     return data
+def insert_data(data, sel_col, n):
+    '''
+    利用递归方式，采用拉格朗日方法均匀插入值
+    '''
+    data0 = data[:]
+    if (n == 0):
+        return data0
+    else:
+        data0['index'] = range(0, 2*len(data0), 2)      
+        data0 = data0.set_index(['index'])
+    
+        df = pd.DataFrame(columns = [sel_col]) #创建代表总负载的dataframe 
+        df['index'] = range(2*len(data0))
+        df = df.set_index(['index'])
+        
+        df = pd.concat([data0, df], axis=1)
+        #留下del_col列表中的数据
+        df = df[sel_col]
+    
+       # s0 = result.loc[[0]]
+        for i in range(2):
+            s0 = df.iloc[:,i] #取指定列
+            if s0[0] != None:
+                df0 = s0
+                break
+    
+        for j in range(len(df0)):
+            if df0.values[j] > 120: #如果为空即插值。
+                df0[j] = ployinterp_column(df0, j, 2)
+        df = df0.to_frame()
+                
+        return insert_data(df, sel_col, n-1)
+    
+def del_data(data, sample_interval, sel_col):
+    None
 
 def reset_index(data, ticks):
     '''重设index'''
