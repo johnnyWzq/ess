@@ -20,7 +20,7 @@ class Settings():
         #选择哪个参数计算
         self.calc_para = 'power'
         #充电桩设置
-        self.charger_nums = 10
+        self.chargers_num = 10
     #    self.charger_pout_max = 50
         #逆变器设置
         self.pcs_nums = 1
@@ -31,7 +31,7 @@ class Settings():
         #其他设置
         self.power_lose = 0
         #系统采样时间为1S，1小时3600个采样点
-        self.sample_interval = 3600
+        self.sample_interval = 360
         
         self.initialize_dynamic_settings()
         
@@ -39,7 +39,11 @@ class Settings():
         '''初始化系统变量设置'''
         #为1表示给储能充电，-1表示逆变放电
         self.power_direction = 1
-        self.charges_iswork = [0] * 10
+        self.charges_iswork = [0] * (self.chargers_num + 1)#第一位为总负载
+        self.load_regular = [1] * (self.chargers_num + 1)
         
-    def update_settings(self, settings):
-        self.power_direction = settings.power_dircetion
+    def update_settings(self, num, state='on'):
+        if state == 'on':
+            self.charges_iswork[num] = 1
+        elif state == 'off':
+            self.charges_iswork[num] = 0

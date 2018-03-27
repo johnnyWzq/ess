@@ -29,7 +29,7 @@ def preprocess_data(data, sys_settings, col_sel=None, row_sel=None,
     load_data = get_pvc_data(data, row_sel)
     
     load_data = sel_period(load_data)
-    
+        
     load_data = deal_abnormal_data(load_data, sys_settings.calc_para)
     
     return load_data
@@ -44,33 +44,39 @@ def preprocess_data(data, sys_settings, col_sel=None, row_sel=None,
 
 def get_pvc_data(data, row_sel=None):
 
-    load_data = load_volt_cur(data, v1='volt', c1='cur')
-    load_data['power'] = calc_power(load_data)
+#    load_data = load_volt_cur(data, v1='volt', c1='cur')
+    data['power'] = calc_power(data, v1='volt', c1='cur')
     #获得负载中对功率、电压和电流值
-    load_data = load_data[['power', 'volt', 'cur']]
+    data = data[['time', 'power', 'volt', 'cur']]
 
-    return load_data
+    return data
       
 def load_volt_cur(data, v1=None, v2=None, v3=None,
                       c1=None, c2=None, c3=None):
         """读取电压电流值"""
       
         if v2 and v3 and c2 and c3:
-            load_data = data[[v1, v2, v3, c1, c2, c3]]
+            load_data = data[['time', v1, v2, v3, c1, c2, c3]]
         else:
-            load_data = data[[v1, c1]]
+            load_data = data['time', [v1, c1]]
         return load_data
         
-def calc_power(data):
+def calc_power(data, v1=None, v2=None, v3=None,
+                      c1=None, c2=None, c3=None):
         '''根据电压电流计算功率'''
-        power =  data['volt'] * data['cur']
+        if v2 and v3 and c2 and c3:
+            print('Nan')
+        else:
+            power =  data['volt'] * data['cur']
         return power
 
-def sel_period(data, interval=10, d_clip=2):
+def sel_period(data, index_col='time', interval=10, d_clip=2):
     '''
     选择一个周期对数据切片，
     时间间隔大于10分钟认为新对周期
     '''
+    data = data.set_index([index_col])#将time设为index
+    
     index = data.index[0]
     index_pre = index
     try:
@@ -94,8 +100,42 @@ def sel_period(data, interval=10, d_clip=2):
     #选择第2个数据片
     d_clip %= 2 
     data_clip = data[index_list[2+d_clip]:index_list[3+d_clip]]
+
     return data_clip
 
+"""
+def sel_period(data, index_col='time', interval=10, d_clip=2):
+    '''
+    选择一个周期对数据切片，
+    时间间隔大于10分钟认为新对周期
+    '''
+    index_l = data.iloc[0]
+    index = index_l[index_col]
+    index_pre = index
+
+    try:
+        t_obj = time.strptime(index, "%Y/%m/%d %H:%M")
+        t_stamp_pre = time.mktime(t_obj)
+        index_list = [index]
+        time_interval = 60 * interval
+        #将字符串转换为时间戳并计算得到按时间划分对index
+        for index in data[index_col]:
+            
+            t_obj = time.strptime(index, "%Y/%m/%d %H:%M")
+            t_stamp = time.mktime(t_obj)
+            if (t_stamp - t_stamp_pre ) >= time_interval:
+                index_list.append(index_pre)
+                index_list.append(index)
+            t_stamp_pre = t_stamp
+            index_pre = index
+    except:
+        print("时间格式有误！")
+
+    #选择第2个数据片
+    d_clip %= 2 
+    data_clip = data[index_list[2+d_clip]:index_list[3+d_clip]]#错误，需要重建time为index
+    return data_clip
+"""
 def deal_abnormal_data(data, sel_col='power'):
     '''
     处理power对异常数值
@@ -141,20 +181,39 @@ def complete_data(data, sample_interval, data_key):
             
     return data
 
-def reset_index(ticks,data):
+def reset_index(data, ticks):
     '''重设index'''
     data['index'] = range(ticks, len(data)+ticks)
     data = data.set_index(['index'])
     return data
 
 def data_col_rename(data, n, re):
-    data.rename(columns={n:re}, inplace=True)
-    return data
+    data0 = data[:]#防止修改原实参，进行切片复制
+    data0.rename(columns={n:re}, inplace=True)
+    return data0
 
-def data_merge():
-    result = pd.concat([df1, df2, df3], axis=1)
-    result = result[['p1', 'p2', 'p3']]
+def data_merge(df1, df2, col_name, col_list):
+    if col_name in df1.columns:
+        df1 = df1.drop(col_name, 1)#删除指定列负载数据
+    result = pd.concat([df1, df2], axis=1)
+    #留下col_list列表中的负载数据
+    result = result[col_list]
+    result = result.fillna(0)
+    return result
 
+def data_del_col(df, col_name):
+    df[col_name] = 0
+    return df
+    
+def data_single_row_add(ticks, df, l_name, regularlist):
+    n = 0
+    d_sum = 0.0
+    for i in df.iloc[ticks]:
+        d_sum += i * float(regularlist[n])
+        n += 1
+    df.loc[ticks, [l_name]] = d_sum
+    return df
+    
 class Datadiscovery():
     """对数据做简单探索"""
     
@@ -194,7 +253,7 @@ class Datadiscovery():
         
         plt.figure()
         data.plot(kind = commont_kinds)
-        unit = {'power':'kW', 'volt':'V', 'cur':'A'}
+        unit = {'power':'kW', 'volt':'V', 'cur':'A', 'Lo':'kW'}
         plt.ylabel(col + '(' + unit[col] + ')')
 #        data.plot(style = '-o', linewidth = 2)
         
