@@ -24,7 +24,7 @@ class Settings():
     #    self.charger_pout_max = 50
         #逆变器设置
         self.pcs_nums = 1
-        #储能单元设置
+        #储能单元设置5
         self.es_nums = 1
         #监控与调度单元设置
         

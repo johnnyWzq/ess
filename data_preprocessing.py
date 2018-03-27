@@ -103,39 +103,7 @@ def sel_period(data, index_col='time', interval=10, d_clip=2):
 
     return data_clip
 
-"""
-def sel_period(data, index_col='time', interval=10, d_clip=2):
-    '''
-    选择一个周期对数据切片，
-    时间间隔大于10分钟认为新对周期
-    '''
-    index_l = data.iloc[0]
-    index = index_l[index_col]
-    index_pre = index
 
-    try:
-        t_obj = time.strptime(index, "%Y/%m/%d %H:%M")
-        t_stamp_pre = time.mktime(t_obj)
-        index_list = [index]
-        time_interval = 60 * interval
-        #将字符串转换为时间戳并计算得到按时间划分对index
-        for index in data[index_col]:
-            
-            t_obj = time.strptime(index, "%Y/%m/%d %H:%M")
-            t_stamp = time.mktime(t_obj)
-            if (t_stamp - t_stamp_pre ) >= time_interval:
-                index_list.append(index_pre)
-                index_list.append(index)
-            t_stamp_pre = t_stamp
-            index_pre = index
-    except:
-        print("时间格式有误！")
-
-    #选择第2个数据片
-    d_clip %= 2 
-    data_clip = data[index_list[2+d_clip]:index_list[3+d_clip]]#错误，需要重建time为index
-    return data_clip
-"""
 def deal_abnormal_data(data, sel_col='power'):
     '''
     处理power对异常数值

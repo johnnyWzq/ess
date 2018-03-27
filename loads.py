@@ -19,13 +19,15 @@ class Loads():
         '''负载类型
         load_pre代表当前时刻前的负载数据集
         '''
+        self.load_pre = load_pre
         if load_num <= sys_settings.chargers_num:
             self.load_type = load_type
             self.state = True
             self.load_num = load_num
             self.sys_settings = sys_settings
-            self.load_pre = load_pre
+            
         else:
+            self.state = False
             print("The number of loads is more than the system_setting! ")
             
         
@@ -33,7 +35,9 @@ class Loads():
         '''加载负载数据，并合并到load_pre
         默认为load.xls
         '''
-
+        if self.state == False:
+            load_cur = self.load_pre.load_t
+            return load_cur
         #判断文件类型
         file_type = data_file[-4:]
 
@@ -71,11 +75,10 @@ class Loads():
                     print("文件格式错误！")
                 
                 load_cur = self.loads_on(sys_ticks, lt_col_list)
-                           
+            
                 return load_cur #返回加载当前负载后的总负载表
         except:
             print("文件读取错误！")
-            return None
             
     def loads_on(self, sys_ticks, col_list):
         """
@@ -135,22 +138,26 @@ def main():
     
     load_total = Loadtotal(ticks_max, sys_settings.chargers_num) #创建代表总负载的dataframe  
     
-    load = Loads(sys_settings, load_total, 1)
-    load2 = Loads(sys_settings, load_total, 2)
-    load_test = Loads(sys_settings, load_total, 9)
-    
     file_input = 'data_temp/charging_data1.csv'
     file_output = 'data/charging_data.xls'
-    figure_output = 'data/charging_data_' + 'L' + str(load.load_num) + '_'
+
     
-    load_total.load_t = load.loading(ticks_test, load_total.col_list, file_input)
-    load_total.load_t = load2.loading(ticks_test+10, load_total.col_list, file_input)
-    load_total.load_t = load_test.loading(ticks_test+100, load_total.col_list, file_input)
+    try:
+        load = Loads(sys_settings, load_total, 1)
+        load_total.load_t = load.loading(ticks_test, load_total.col_list, file_input)
+        load2 = Loads(sys_settings, load_total, 2)
+        load_test = Loads(sys_settings, load_total, 4)
+        load_total.load_t = load2.loading(ticks_test+10, load_total.col_list, file_input)
+        load_total.load_t = load_test.loading(ticks_test+100, load_total.col_list, file_input)
+    except:
+        print("fail to load the load")
     
     
     for i in range(10, 1000):
         load_total.load_t = sc.loads_calc(ticks_test+i, load_total.load_t,
                                      load_total.l_name, sys_settings.load_regular)
+        if i == 500:
+            load_total.load_t = load2.loads_off()
 
     sys_settings.charges_iswork = load.sys_settings.charges_iswork
     
@@ -160,7 +167,9 @@ def main():
     load.load_data.to_excel(file_output)
     dd = Datadiscovery(load.load_data)
     dd.abnormal_check()
-
+    
+    figure_output = 'data/charging_data_' + 'L' + str(load.load_num) + '_'
+    
     dd.draw_plot('line', 'power', figure_output)
     
     load_total.load_t.to_excel('data_temp/l_data.xls')
