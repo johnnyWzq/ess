@@ -172,7 +172,7 @@ def main():
     
     dd.draw_plot('line', 'power', figure_output)
     
-    load_total.load_t.to_excel('data_temp/l_data.xls')
+ #   load_total.load_t.to_excel('data_temp/l_data.xls')
     cc = Datadiscovery(load_total.load_t)
     cc.draw_plot('line', load_total.l_name, 'data/charging_data_Lo')
     

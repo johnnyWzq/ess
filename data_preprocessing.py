@@ -31,16 +31,16 @@ def preprocess_data(data, sys_settings, col_sel=None, row_sel=None,
     load_data = sel_period(load_data)
         
     load_data = deal_abnormal_data(load_data, sys_settings.calc_para)
-    
-    return load_data
-'''   
- #补齐数据
+  
+    #补齐数据
     if len(load_data) < sys_settings.sample_interval:
         #利用插值补齐负载采样点
         load_data = complete_data(load_data, sys_settings.sample_interval, 
-                                  data_key)
-'''    
- #   return load_data
+                                  sys_settings.calc_para)
+    else:
+        #裁剪数据
+        print('to be continu..')
+    return load_data
 
 def get_pvc_data(data, row_sel=None):
 
@@ -135,9 +135,16 @@ def complete_data(data, sample_interval, sel_col):
     '''
     均匀补齐数据
     '''
-            
-            
+    num = int(sample_interval/len(data)) + 1
+    num = int(math.log(num, 2)) + 1
+    if num < 9: # 7200sample_interval
+        data = insert_data(data, sel_col, num)
+        if len(data) > sample_interval:#超出,删除超出的后面数据部分
+            data = data[0:sample_interval]
+    else:
+        print("Error, the data is too big!")
     return data
+
 def insert_data(data, sel_col, n):
     '''
     利用递归方式，采用拉格朗日方法均匀插入值
@@ -165,7 +172,7 @@ def insert_data(data, sel_col, n):
                 break
     
         for j in range(len(df0)):
-            if df0.values[j] > 120: #如果为空即插值。
+            if df0.values[j] > 1000000: #如果为空即插值。
                 df0[j] = ployinterp_column(df0, j, 2)
         df = df0.to_frame()
                 

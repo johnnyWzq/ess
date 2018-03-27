@@ -147,10 +147,13 @@ def ployinterp_column(s, n, k=2):
     y = s[list(range(n-k, n)) + list(range(n+1, n+1+k))] #取数
     y = y[y.notnull()] #剔除空值
     return lagrange(y.index, list(y))(n) #插值并返回插值结果
-            
+   
+num = 3600/250 + 1
+num = int(math.log(num, 2))         
 
 df4 = df4[0:11]
 df5 = insert_data(df4, 'p4', 3)
+df5 = df5[0:50]
 '''
 def data_merge(data1, data2, num):
 

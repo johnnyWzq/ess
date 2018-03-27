@@ -31,7 +31,7 @@ class Settings():
         #其他设置
         self.power_lose = 0
         #系统采样时间为1S，1小时3600个采样点
-        self.sample_interval = 360
+        self.sample_interval = 3600
         
         self.initialize_dynamic_settings()
         
