@@ -15,46 +15,47 @@ import file_process as fp
 
 class Loads():
     '''负载'''
-    def __init__(self, sys_settings, load_pre, load_num, load_type=1):
+    def __init__(self, sys_settings, load_num, load_type=1,
+                 data_file='data/loads_model.xls', filter_col='BMS编号'):
         '''负载类型
         load_pre代表当前时刻前的负载数据集
         '''
-        self.load_pre = load_pre
         if load_num <= sys_settings.chargers_num:
             self.load_type = load_type#标准模型中的负载类型
             self.state = True#负载置为有效
             self.load_num = load_num#负载编号
             self.sys_settings = sys_settings
             
+            #读取数据文件
+            self.load_data = fp.read_load_file(self.load_type, data_file)
+            if data_file != 'data/loads_model.xls':
+            #对数据进行预处理
+                self.load_data = dp.preprocess_data(self.load_data, self.sys_settings,
+                                    col_sel=filter_col, row_sel='010101030613001F')
+            
         else:
             self.state = False
             print("The number of loads is more than the system_setting! ")
             
         
-    def loading(self, sys_ticks, lt_col_list, 
-                data_file='data/loads_model.xls', filter_col='BMS编号'):
+    def loading(self, sys_ticks, load_pre_data, lt_col_list):
         '''加载负载数据，并合并到load_pre
         默认为load.xls
         '''
+        
         if self.state == False:
-            load_cur = self.load_pre.load_t
-            return load_cur
-        #读取数据文件
-        self.load_data = fp.read_load_file(self.load_type, data_file)
-        if data_file != 'data/loads_model.xls':
-        #对数据进行预处理
-            self.load_data = dp.preprocess_data(self.load_data, self.sys_settings,
-                                col_sel=filter_col, row_sel='010101030613001F')
-        load_cur = self.loads_on(sys_ticks, lt_col_list)
+            return load_pre_data
+        
+        load_cur = self.loads_on(sys_ticks, load_pre_data, lt_col_list)
         
         return load_cur #返回加载当前负载后的总负载表
 
 
-    def loads_on(self, sys_ticks, col_list):
+    def loads_on(self, sys_ticks, load_pre_data, lt_col_list):
         """
         计算当前加载的负载，放入load_pre中并返回
         sys_ticks为系统运行至当前采样数
-        
+        col_list为当前负载有效状态列表
         """
         if self.sys_settings.charges_iswork[self.load_num] == 0:
             #在当前时刻为新的负载,可以加载，并更新sys
@@ -66,23 +67,23 @@ class Loads():
             data = dp.data_col_rename(self.load_data, 
                                self.sys_settings.calc_para, 'p'+str(self.load_num))
             #与load_pre合并
-            load_cur = dp.data_merge(self.load_pre.load_t, data,
+            load_cur = dp.data_merge(load_pre_data, data,
                                     'p'+str(self.load_num),
-                                    col_list)
-            self.load_pre.load_t = load_cur
+                                    lt_col_list)
+           # self.load_pre.load_t = load_cur
             
             return load_cur
         else:
             # 直接返回load_pre
-            return self.load_pre.load_t
+            return load_pre_data
     
-    def loads_off(self):
+    def loads_off(self, load_pre_data):
         """
         找到负载对应列，置为0
         """
         #更新sys
         self.sys_settings.update_settings(self.load_num, 'off')
-        load_cur = dp.data_del_col(self.load_pre.load_t, 'p'+str(self.load_num))
+        load_cur = dp.data_del_col(load_pre_data, 'p'+str(self.load_num))
 
         return load_cur
 
@@ -112,16 +113,16 @@ def main():
 
     load_list = []
     try:
-        load = Loads(sys_settings, load_total, 1)
-        load_total.load_t = load.loading(ticks_test, load_total.col_list, file_input)
+        load = Loads(sys_settings, 1, data_file=file_input)
+        load_total.load_t = load.loading(ticks_test, load_total.load_t, load_total.col_list)
         load_list.append(load)
         
-        load2 = Loads(sys_settings, load_total, 2)
-        load_total.load_t = load2.loading(ticks_test+10, load_total.col_list, file_input)
+        load2 = Loads(sys_settings, 2, data_file=file_input)
+        load_total.load_t = load2.loading(ticks_test+10, load_total.load_t, load_total.col_list)
         load_list.append(load2)
         
-        load_test = Loads(sys_settings, load_total, 4)
-        load_total.load_t = load_test.loading(ticks_test+100, load_total.col_list, file_input)
+        load_test = Loads(sys_settings, 4, data_file=file_input)
+        load_total.load_t = load_test.loading(ticks_test+100, load_total.load_t, load_total.col_list)
         load_list.append(load_test)
     except:
         print("fail to load the load")
@@ -131,7 +132,7 @@ def main():
         load_total.load_t = sc.loads_calc(ticks_test+i, load_total.load_t,
                                      load_total.l_name, sys_settings.load_regular)
         if i == 50:
-            load_total.load_t = load2.loads_off()
+            load_total.load_t = load2.loads_off(load_total.load_t)
 
     sys_settings.charges_iswork = load.sys_settings.charges_iswork
     
