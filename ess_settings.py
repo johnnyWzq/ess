@@ -30,8 +30,8 @@ class Settings():
         
         #其他设置
         self.power_lose = 0
-        #系统采样时间为1S，1小时3600个采样点
-        self.sample_interval = 3600
+        #系统采样时间为1S，1小时3600个采样点，允许最高采样频率
+        self.sample_interval = 36
         
         self.initialize_dynamic_settings()
         

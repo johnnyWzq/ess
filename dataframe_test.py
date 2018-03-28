@@ -7,6 +7,15 @@ Created on Mon Mar 26 16:11:45 2018
 import pandas as pd
 
 
+from datetime import datetime,date,timedelta  
+now = datetime.now();  
+nextDay = now + timedelta(days = 1);#增加一天后的时间  
+nextSecond = now + timedelta(seconds = 1);#增加一秒后的时间  
+span  = now - nextDay;#获取时间差对象  
+print(now);  
+print(nextDay);  
+print(nextSecond);  
+print(span.total_seconds());#获取时间差 以秒为单位  
 
 def reset_index(ticks,data):
     '''重设index'''
@@ -40,6 +49,11 @@ df4 = pd.read_excel('data/model.xls', index_col=0)
 df4.rename(columns={'power':'p4'}, inplace=True)
 #df4 = reset_index(60, df4)
 df4.loc[1, ['p4']] = 6
+
+a = []
+a.append(df1)
+a.append(df2)
+
 
 h = 'p3'
 if h in df3.columns:
@@ -148,12 +162,69 @@ def ployinterp_column(s, n, k=2):
     y = y[y.notnull()] #剔除空值
     return lagrange(y.index, list(y))(n) #插值并返回插值结果
    
-num = 3600/250 + 1
-num = int(math.log(num, 2))         
+for i in range(1,10):
+    j = math.log((i/2.0), 2)
+    k = math.log(i ,2) - math.log(2, 2)
 
+
+
+a = [1,2,3,4,5,6,7,8, '', None]
+b = 2.1
+k = 0
+if b in a:
+    print("is:" + str(b))
+for b in a:
+    if b == None:
+        k += 1
+        print(k)
+
+def delete_data(data, sel_col, n):
+    '''
+    均匀删除数据
+    '''
+    #计算要翻倍数据的次数
+    
+    if int(len(data)/2) == 1:
+        data0 = data[0:-1]
+    else:
+        data0 = data[:]
+        
+    if (n == 0):
+        return data0
+    else:
+        #按偶数行删除
+        l = list(range(0, len(data0), 2))
+        data0 = data0.drop(l)
+        data0['index'] = range(len(data0))
+        data0 = data0.set_index(['index'])
+    return delete_data(data0, sel_col, n-1)
+
+
+def del_test(data, sample_interval, sel_col):
+    '''
+    计算要压缩数据的次数
+    但是为了不必要的程序开销，压缩后数据均会比目标大，大的部分直接去掉
+    '''
+    num = int(math.log((len(data)/sample_interval), 2))
+
+    if num < 8: # 最多删减8次
+        data = delete_data(data, sel_col, num)
+        if len(data) > sample_interval:#超出,删除超出的后面数据部分
+            data = data[0:sample_interval]
+    else:
+        print('the data is too small!')
+    return data
+
+
+df4 = df4[0:223]
+df5 = del_test(df4, 36, 'p4')
+
+
+'''
 df4 = df4[0:11]
 df5 = insert_data(df4, 'p4', 3)
 df5 = df5[0:50]
+'''
 '''
 def data_merge(data1, data2, num):
 

@@ -6,9 +6,9 @@ Created on Sun Mar 25 13:41:14 2018
 @author: zhiqiangwu
 """
 import time
-
+import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
+
 from scipy.interpolate import lagrange #导入拉格朗日插值函数
 import math
 
@@ -38,8 +38,9 @@ def preprocess_data(data, sys_settings, col_sel=None, row_sel=None,
         load_data = complete_data(load_data, sys_settings.sample_interval, 
                                   sys_settings.calc_para)
     else:
-        #裁剪数据
-        print('to be continu..')
+        #过滤掉数据
+        load_data = filter_data(load_data, sys_settings.sample_interval, 
+                                  sys_settings.calc_para)
     return load_data
 
 def get_pvc_data(data, row_sel=None):
@@ -135,14 +136,34 @@ def complete_data(data, sample_interval, sel_col):
     '''
     均匀补齐数据
     '''
-    num = int(sample_interval/len(data)) + 1
-    num = int(math.log(num, 2)) + 1
-    if num < 9: # 7200sample_interval
+    #计算要翻倍数据的次数
+    num = math.log((sample_interval/len(data)), 2)
+    a = [1, 2, 3, 4, 5, 6, 7, 8]
+    if num in a:
+        num = int(num)
+    else:
+        num = int(num) + 1
+    if num < len(a): # 7200sample_interval
         data = insert_data(data, sel_col, num)
         if len(data) > sample_interval:#超出,删除超出的后面数据部分
             data = data[0:sample_interval]
     else:
         print("Error, the data is too big!")
+    return data
+
+def filter_data(data, sample_interval, sel_col):
+    '''
+    计算要压缩数据的次数
+    但是为了不必要的程序开销，压缩后数据均会比目标大，大的部分直接去掉
+    '''
+    num = int(math.log((len(data)/sample_interval), 2))
+
+    if num < 8: # 最多删减8次
+        data = delete_data(data, sel_col, num)
+        if len(data) > sample_interval:#超出,删除超出的后面数据部分
+            data = data[0:sample_interval]
+    else:
+        print('the data is too small!')
     return data
 
 def insert_data(data, sel_col, n):
@@ -172,14 +193,31 @@ def insert_data(data, sel_col, n):
                 break
     
         for j in range(len(df0)):
-            if df0.values[j] > 1000000: #如果为空即插值。
+            if  np.isnan(df0.values[j]): #如果为空即插值。
                 df0[j] = ployinterp_column(df0, j, 2)
         df = df0.to_frame()
                 
         return insert_data(df, sel_col, n-1)
-    
-def del_data(data, sample_interval, sel_col):
-    None
+
+def delete_data(data, sel_col, n):
+    '''
+    均匀删除数据,删除偶数行
+    '''
+    #确定数据行为偶数
+    if int(len(data)/2) == 1:
+        data0 = data[0:-1]
+    else:
+        data0 = data[:]
+        
+    if (n == 0):
+        return data0
+    else:
+        #按偶数行删除
+        l = list(range(0, len(data0), 2))
+        data0 = data0.drop(l)
+        data0['index'] = range(len(data0))
+        data0 = data0.set_index(['index'])
+    return delete_data(data0, sel_col, n-1)
 
 def reset_index(data, ticks):
     '''重设index'''
@@ -208,11 +246,16 @@ def data_del_col(df, col_name):
 def data_single_row_add(ticks, df, l_name, regularlist):
     n = 0
     d_sum = 0.0
-    for i in df.iloc[ticks]:
-        d_sum += i * float(regularlist[n])
-        n += 1
-    df.loc[ticks, [l_name]] = d_sum
-    return df
+    df0 = df[:]
+    df0 = df.drop('time', 1)
+    if ticks <= len(df0):
+        for i in df0.iloc[ticks]:
+            d_sum += i * float(regularlist[n])
+            n += 1
+        df0.loc[ticks, [l_name]] = d_sum
+    df0['time'] = df['time']
+
+    return df0
     
 class Datadiscovery():
     """对数据做简单探索"""
@@ -241,21 +284,4 @@ class Datadiscovery():
         statistics.loc['var'] = statistics.loc['std']/statistics.loc['mean'] #变异系数
         statistics.loc['dis'] = statistics.loc['75%']-statistics.loc['25%'] #四分位数间距
         
-        #print(statistics)
-        
-        
-    def draw_plot(self, commont_kinds, col, figure_output):
-        data = self.data[col].copy()
-        data.sort_values(ascending = False)
-        
-        plt.rcParams['font.sans-serif'] = ['SimHei'] #用来正常显示中文标签
-        plt.rcParams['axes.unicode_minus'] = False #用来正常显示负号
-        
-        plt.figure()
-        data.plot(kind = commont_kinds)
-        unit = {'power':'kW', 'volt':'V', 'cur':'A', 'Lo':'kW'}
-        plt.ylabel(col + '(' + unit[col] + ')')
-#        data.plot(style = '-o', linewidth = 2)
-        
-        plt.savefig(figure_output + col +'.jpg', dpi=100)
-        plt.show()
+        print(statistics)

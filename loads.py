@@ -5,10 +5,10 @@ Created on Sat Mar 24 12:13:52 2018
 
 @author: zhiqiangwu
 """
-import pandas as pd
 
 import data_preprocessing as dp
 
+import file_process as fp
 
 
 
@@ -21,9 +21,9 @@ class Loads():
         '''
         self.load_pre = load_pre
         if load_num <= sys_settings.chargers_num:
-            self.load_type = load_type
-            self.state = True
-            self.load_num = load_num
+            self.load_type = load_type#标准模型中的负载类型
+            self.state = True#负载置为有效
+            self.load_num = load_num#负载编号
             self.sys_settings = sys_settings
             
         else:
@@ -31,55 +31,25 @@ class Loads():
             print("The number of loads is more than the system_setting! ")
             
         
-    def loading(self, sys_ticks, lt_col_list, data_file='data/loads_model.xls'):
+    def loading(self, sys_ticks, lt_col_list, 
+                data_file='data/loads_model.xls', filter_col='BMS编号'):
         '''加载负载数据，并合并到load_pre
         默认为load.xls
         '''
         if self.state == False:
             load_cur = self.load_pre.load_t
             return load_cur
-        #判断文件类型
-        file_type = data_file[-4:]
+        #读取数据文件
+        self.load_data = fp.read_load_file(self.load_type, data_file)
+        if data_file != 'data/loads_model.xls':
+        #对数据进行预处理
+            self.load_data = dp.preprocess_data(self.load_data, self.sys_settings,
+                                col_sel=filter_col, row_sel='010101030613001F')
+        load_cur = self.loads_on(sys_ticks, lt_col_list)
+        
+        return load_cur #返回加载当前负载后的总负载表
 
-        try:
-            #如果是预设的数据
-            if data_file == 'data/loads_model.xls':
-                self.load_data = pd.read_excel(data_file, index_col=0)
-             #根据负载类型，选择默认负载数据
-                if self.load_type == 1:
-                    self.load_data['power'] = self.load_data['type1']
-                elif self.load_type == 2:
-                    self.load_data['power'] = self.load_data['type2']
-                elif self.load_type == 3:
-                    self.load_data['power'] = self.load_data['type3']
-                else:
-                    self.load_data['power'] = self.load_data['type4']
-                self.load_data = self.load_data[['power']]
-            else: 
-                #加载数据文件，并进行预处理
-            
-                if file_type == '.xls':
-                   #读取负载数据，第一列为索引     
-                   data = pd.read_excel(data_file)#, index_col=0)
-                   #读取负载数据，自动索引
-                   #data = pd.read_excel(data_file)
-                elif file_type == '.csv':
-                    #只读取65535条数据
-                    data = pd.read_csv(data_file,#index_col=0, 
-                                                 nrows=65535, encoding='utf-8')
-                    #对数据进行预处理
-                    self.load_data = dp.preprocess_data(data, self.sys_settings,
-                                col_sel='BMS编号', row_sel='010101030613001F')
-                #print(self.load_data)
-                else:
-                    print("文件格式错误！")
-                
-                load_cur = self.loads_on(sys_ticks, lt_col_list)
-            
-                return load_cur #返回加载当前负载后的总负载表
-        except:
-            print("文件读取错误！")
-            
+
     def loads_on(self, sys_ticks, col_list):
         """
         计算当前加载的负载，放入load_pre中并返回
@@ -121,7 +91,7 @@ test
 """
 def main():
     
-    from data_preprocessing import Datadiscovery
+
     from ess_settings import Settings
     
     import sys_control as sc
@@ -139,42 +109,46 @@ def main():
     load_total = Loadtotal(ticks_max, sys_settings.chargers_num) #创建代表总负载的dataframe  
     
     file_input = 'data_temp/charging_data1.csv'
-    file_output = 'data/charging_data.xls'
 
-    
+    load_list = []
     try:
         load = Loads(sys_settings, load_total, 1)
         load_total.load_t = load.loading(ticks_test, load_total.col_list, file_input)
+        load_list.append(load)
+        
         load2 = Loads(sys_settings, load_total, 2)
-        load_test = Loads(sys_settings, load_total, 4)
         load_total.load_t = load2.loading(ticks_test+10, load_total.col_list, file_input)
+        load_list.append(load2)
+        
+        load_test = Loads(sys_settings, load_total, 4)
         load_total.load_t = load_test.loading(ticks_test+100, load_total.col_list, file_input)
+        load_list.append(load_test)
     except:
         print("fail to load the load")
     
     
-    for i in range(10, 1000):
+    for i in range(10, 100):
         load_total.load_t = sc.loads_calc(ticks_test+i, load_total.load_t,
                                      load_total.l_name, sys_settings.load_regular)
-        if i == 500:
+        if i == 50:
             load_total.load_t = load2.loads_off()
 
     sys_settings.charges_iswork = load.sys_settings.charges_iswork
     
 #    print(load.load_data)
-    print(sys_settings.charges_iswork)
-    print(load_total.load_t)
-    load.load_data.to_excel(file_output)
-    dd = Datadiscovery(load.load_data)
-    dd.abnormal_check()
+#    print(sys_settings.charges_iswork)
+#    print(load_total.load_t)
     
-    figure_output = 'data/charging_data_' + 'L' + str(load.load_num) + '_'
-    
-    dd.draw_plot('line', 'power', figure_output)
+    for ld in load_list:
+        figure_output = 'data_load/load' + str(ld.load_num) + '.jpg'
+        file_output = 'data_load/load' + str(ld.load_num) + '.csv'
+        fp.draw_plot(ld.load_data, 'power', figure_output=figure_output)
+        fp.write_load_file(ld.load_data, file_output)
     
  #   load_total.load_t.to_excel('data_temp/l_data.xls')
-    cc = Datadiscovery(load_total.load_t)
-    cc.draw_plot('line', load_total.l_name, 'data/charging_data_Lo')
+
+    fp.draw_plot(load_total.load_t, load_total.l_name, figure_output='data_load/load_total.jpg')
+    fp.write_load_file(load_total.load_t, 'data_load/load_total.csv')
     
 if __name__ == '__main__':
     main()
