@@ -15,7 +15,7 @@ import file_process as fp
 
 class Loads():
     '''负载'''
-    def __init__(self, sys_settings, load_pre, load_num, load_type=1):
+    def __init__(self, sys_settings, load_pre, load_num, load_type=4):
         '''负载类型
         load_pre代表当前时刻前的负载数据集
         '''
@@ -37,14 +37,18 @@ class Loads():
         默认为load.xls
         '''
         if self.state == False:
+            self.state = True #当前对象允许下一次调用时可以加载数据
             load_cur = self.load_pre.load_t
             return load_cur
         #读取数据文件
         self.load_data = fp.read_load_file(self.load_type, data_file)
-        if data_file != 'data/loads_model.xls':
+        if data_file == 'data/loads_model.xls':
+            data_d = False
+        else:
+            data_d = True
         #对数据进行预处理
-            self.load_data = dp.preprocess_data(self.load_data, self.sys_settings,
-                                col_sel=filter_col, row_sel='010101030613001F')
+        self.load_data = dp.preprocess_data(self.load_data, self.sys_settings,
+                                data_d, col_sel=filter_col, row_sel='010101030613001F')
         load_cur = self.loads_on(sys_ticks, lt_col_list)
         
         return load_cur #返回加载当前负载后的总负载表
@@ -56,15 +60,17 @@ class Loads():
         sys_ticks为系统运行至当前采样数
         
         """
-        if self.sys_settings.charges_iswork[self.load_num] == 0:
+        if self.load_pre.chargers_iswork[self.load_num] == 0:
             #在当前时刻为新的负载,可以加载，并更新sys
-            self.sys_settings.update_settings(self.load_num, 'on')
+            self.load_pre.update_settings(self.load_num, 'on')
             #按当前时刻重设data的index，使得合并dataframe时行能对应
             self.load_data = dp.reset_index(self.load_data, sys_ticks)
 
             #按负载编号重命名数据calc_para列
             data = dp.data_col_rename(self.load_data, 
                                self.sys_settings.calc_para, 'p'+str(self.load_num))
+            
+            self.end_tick = sys_ticks + len(data) #负载失效时刻
             #与load_pre合并
             load_cur = dp.data_merge(self.load_pre.load_t, data,
                                     'p'+str(self.load_num),
@@ -81,11 +87,15 @@ class Loads():
         找到负载对应列，置为0
         """
         #更新sys
-        self.sys_settings.update_settings(self.load_num, 'off')
+        self.load_pre.update_settings(self.load_num, 'off')
         load_cur = dp.data_del_col(self.load_pre.load_t, 'p'+str(self.load_num))
 
         return load_cur
-
+    
+    def loads_update(self, sys_ticks):
+        if sys_ticks == self.end_tick:
+            self.load_pre.update_settings(self.load_num, 'off')
+        return self.load_pre.chargers_iswork
 """
 test
 """
@@ -100,43 +110,70 @@ def main():
     
     
     sys_settings = Settings()
-    print(sys_settings.charges_iswork)
     
-    ticks_max = sys_settings.sample_interval * 24 #24h
     
-    ticks_test = 10
+    ticks_max = sys_settings.sample_interval * 12 #24h
+    
+    ticks_test1 = 1
+    ticks_test2 = 50
+    ticks_test3 = 200
+    ticks_test4 = 400
     
     load_total = Loadtotal(ticks_max, sys_settings.chargers_num) #创建代表总负载的dataframe  
+    print(load_total.chargers_iswork)
     
     file_input = 'data_temp/charging_data1.csv'
 
     load_list = []
-    try:
-        load = Loads(sys_settings, load_total, 1)
-        load_total.load_t = load.loading(ticks_test, load_total.col_list, file_input)
-        load_list.append(load)
-        
-        load2 = Loads(sys_settings, load_total, 2)
-        load_total.load_t = load2.loading(ticks_test+10, load_total.col_list, file_input)
-        load_list.append(load2)
-        
-        load_test = Loads(sys_settings, load_total, 4)
-        load_total.load_t = load_test.loading(ticks_test+100, load_total.col_list, file_input)
-        load_list.append(load_test)
-    except:
-        print("fail to load the load")
     
-    
-    for i in range(10, 100):
-        load_total.load_t = sc.loads_calc(ticks_test+i, load_total.load_t,
+    for i in range(1, ticks_max):
+        
+        try:
+            if i == ticks_test1:
+                load = Loads(sys_settings, load_total, 1)
+                load_total.load_t = load.loading(ticks_test1, load_total.col_list)#, file_input)
+                if load.load_pre.chargers_iswork[load.load_num] == 1:
+                    load_total.chargers_iswork[load.load_num] == 1
+                load_list.append(load)
+            
+            if i == ticks_test2:
+                load2 = Loads(sys_settings, load_total, 2)
+                load_total.load_t = load2.loading(ticks_test2, load_total.col_list)#, file_input)
+                if load2.load_pre.chargers_iswork[load2.load_num] == 1:
+                    load_total.chargers_iswork[load2.load_num] == 1
+                    load_list.append(load2)
+            
+            if i == ticks_test3:
+                load_test = Loads(sys_settings, load_total, 4)
+                load_total.load_t = load_test.loading(ticks_test3, load_total.col_list)#, file_input)
+                if load_test.load_pre.chargers_iswork[load_test.load_num] == 1:
+                    load_total.chargers_iswork[load_test.load_num] == 1
+                    load_list.append(load_test)
+                    
+            if i == ticks_test4:
+                load_total.load_t = load.loading(ticks_test4, load_total.col_list)#, file_input)
+                if load.load_pre.chargers_iswork[load.load_num] == 1:
+                    load_total.chargers_iswork[load.load_num] == 1
+                load_list.append(load)
+        except:
+            print("fail to load the load")
+        
+        
+        
+        load_total.load_t = sc.loads_calc(i, load_total.load_t,
                                      load_total.l_name, sys_settings.load_regular)
-        if i == 50:
+    #    for load in load_list:
+        load_total.chargers_iswork = load.loads_update(i)
+     #   load_total.chargers_iswork = load2.loads_update(i)
+      #  load_total.chargers_iswork = load_test.loads_update(i)
+ 
+        if i == 120:
             load_total.load_t = load2.loads_off()
-
-    sys_settings.charges_iswork = load.sys_settings.charges_iswork
+        i += 1
+   # load_total.chargers_iswork = load.load_total.chargers_iswork
     
 #    print(load.load_data)
-#    print(sys_settings.charges_iswork)
+#    print(sys_settings.chargers_iswork)
 #    print(load_total.load_t)
     
     for ld in load_list:

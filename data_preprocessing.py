@@ -12,26 +12,29 @@ import pandas as pd
 from scipy.interpolate import lagrange #导入拉格朗日插值函数
 import math
 
-def preprocess_data(data, sys_settings, col_sel=None, row_sel=None, 
+def preprocess_data(data, sys_settings, is_pro, col_sel=None, row_sel=None, 
                     v1=None, v2=None, v3=None,
                       c1=None, c2=None, c3=None):
     '''
-    对外部对数据文件进行预处理
+    对数据文件进行预处理
     处理内容包括：
     1、获取电压、电流值
     2、根据电压电流值计算出功率
     3、选出一个周期对数值
     4、对数据进行清洗
     '''
-    if col_sel and row_sel:
-        data = data[data[col_sel]== row_sel]
-
-    load_data = get_pvc_data(data, row_sel)
+    if is_pro == True:
+        if col_sel and row_sel:
+            data = data[data[col_sel]== row_sel]
     
-    load_data = sel_period(load_data)
+        load_data = get_pvc_data(data, row_sel)
         
-    load_data = deal_abnormal_data(load_data, sys_settings.calc_para)
-  
+        load_data = sel_period(load_data)
+            
+        load_data = deal_abnormal_data(load_data, sys_settings.calc_para)
+    else:
+        load_data = data
+        
     #补齐数据
     if len(load_data) < sys_settings.sample_interval:
         #利用插值补齐负载采样点
@@ -254,7 +257,6 @@ def data_single_row_add(ticks, df, l_name, regularlist):
             n += 1
         df0.loc[ticks, [l_name]] = d_sum
     df0['time'] = df['time']
-
     return df0
     
 class Datadiscovery():

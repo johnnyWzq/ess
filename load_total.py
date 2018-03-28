@@ -36,6 +36,21 @@ class Loadtotal():
                 now_time = now_time + datetime.timedelta(seconds = dlt)
             
             self.load_t['time'] = tl
+         
+        self.initialize_dynamic_settings(col_num)
+        
+    def initialize_dynamic_settings(self, chargers_num):
+        '''初始化系统变量设置'''
+
+        self.chargers_iswork = [0] * (chargers_num + 1)#第一位为总负载
+    #    self.load_regular = [1] * (chargers_num + 1)
+        
+    def update_settings(self, num, state='on'):
+        if state == 'on':
+            self.chargers_iswork[num] = 1
+        elif state == 'off':
+            self.chargers_iswork[num] = 0
+            
 '''test'''
 
 
