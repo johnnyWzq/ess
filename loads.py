@@ -114,78 +114,98 @@ def main():
     
     ticks_max = sys_settings.sample_interval * 12 #24h
     
-    ticks_test1 = 1
-    ticks_test2 = 50
-    ticks_test3 = 200
-    ticks_test4 = 400
     
     load_total = Loadtotal(ticks_max, sys_settings.chargers_num) #创建代表总负载的dataframe  
     print(load_total.chargers_iswork)
     
     file_input = 'data_temp/charging_data1.csv'
-
-    load_list = []
     
+    import link_list as ll
+    
+    load_list = ll.LinkList()
+    
+    
+    ticks_test1 = 1
+    ticks_test2 = 50
+    ticks_test3 = 200
+    ticks_test4 = 400
+    ticks_test6 = 800
+    ticks_test5 = 1500
     for i in range(1, ticks_max):
         
-        try:
-            if i == ticks_test1:
-                load = Loads(sys_settings, load_total, 1)
-                load_total.load_t = load.loading(ticks_test1, load_total.col_list)#, file_input)
-                if load.load_pre.chargers_iswork[load.load_num] == 1:
-                    load_total.chargers_iswork[load.load_num] == 1
-                load_list.append(load)
-            
-            if i == ticks_test2:
-                load2 = Loads(sys_settings, load_total, 2)
-                load_total.load_t = load2.loading(ticks_test2, load_total.col_list)#, file_input)
-                if load2.load_pre.chargers_iswork[load2.load_num] == 1:
-                    load_total.chargers_iswork[load2.load_num] == 1
-                    load_list.append(load2)
-            
-            if i == ticks_test3:
-                load_test = Loads(sys_settings, load_total, 4)
-                load_total.load_t = load_test.loading(ticks_test3, load_total.col_list)#, file_input)
-                if load_test.load_pre.chargers_iswork[load_test.load_num] == 1:
-                    load_total.chargers_iswork[load_test.load_num] == 1
-                    load_list.append(load_test)
-                    
-            if i == ticks_test4:
-                load_total.load_t = load.loading(ticks_test4, load_total.col_list)#, file_input)
-                if load.load_pre.chargers_iswork[load.load_num] == 1:
-                    load_total.chargers_iswork[load.load_num] == 1
-                load_list.append(load)
-        except:
-            print("fail to load the load")
-        
+        if i == ticks_test1:
+            load = Loads(sys_settings, load_total, 1)
+            load_total.load_t = load.loading(ticks_test1, load_total.col_list)#, file_input)
+           # if load.load_pre.chargers_iswork[load.load_num] == 1:
+           #     load_total.chargers_iswork[load.load_num] == 1
+            load_list.append(load)
+            print('sys_ticks = ' + str(i), load_total.chargers_iswork)
+        if i == ticks_test2:
+            load2 = Loads(sys_settings, load_total, 2)
+            load_total.load_t = load2.loading(ticks_test2, load_total.col_list)#, file_input)
+            #if load2.load_pre.chargers_iswork[load2.load_num] == 1:
+            #    load_total.chargers_iswork[load2.load_num] == 1
+            load_list.append(load2)
+            print('sys_ticks = ' + str(i), load_total.chargers_iswork)
+        if i == ticks_test3:
+            load_test = Loads(sys_settings, load_total, 4)
+            load_total.load_t = load_test.loading(ticks_test3, load_total.col_list)#, file_input)
+           # if load_test.load_pre.chargers_iswork[load_test.load_num] == 1:
+            #    load_total.chargers_iswork[load_test.load_num] == 1
+            load_list.append(load_test)
+            print('sys_ticks = ' + str(i), load_total.chargers_iswork)
+        if i == ticks_test4:
+            load_total.load_t = load.loading(ticks_test4, load_total.col_list)#, file_input)
+            #if load.load_pre.chargers_iswork[load.load_num] == 1:
+           #     load_total.chargers_iswork[load.load_num] == 1
+            print('sys_ticks = ' + str(i), load_total.chargers_iswork)
+        if i == ticks_test5:
+            load_total.load_t = load.loading(ticks_test5, load_total.col_list)#, file_input)
+            #if load.load_pre.chargers_iswork[load.load_num] == 1:
+            #    load_total.chargers_iswork[load.load_num] == 1
+
+            print('sys_ticks = ' + str(i), load_total.chargers_iswork)
+        if i == ticks_test6:
+            load8 = Loads(sys_settings, load_total, 8)
+            load_total.load_t = load8.loading(ticks_test6, load_total.col_list)#, file_input)
+            load_list.append(load8)
+            #if load8.load_pre.chargers_iswork[load8.load_num] == 1:
+            #    load_total.chargers_iswork[load8.load_num] == 1
+            print('sys_ticks = ' + str(i), load_total.chargers_iswork)
         
         
         load_total.load_t = sc.loads_calc(i, load_total.load_t,
                                      load_total.l_name, sys_settings.load_regular)
-    #    for load in load_list:
-        load_total.chargers_iswork = load.loads_update(i)
+        ld = load_list.head
+        while ld != 0:
+           #load_total.chargers_iswork = ld.data.loads_update(i)
+   #        t = ld.data.loads_update(i)
+           ld = ld.next
+
      #   load_total.chargers_iswork = load2.loads_update(i)
       #  load_total.chargers_iswork = load_test.loads_update(i)
  
         if i == 120:
             load_total.load_t = load2.loads_off()
+            print('sys_ticks = ' + str(i), load_total.chargers_iswork)
         i += 1
+    fp.draw_plot(load_total.load_t, load_total.l_name, figure_output='data_load/load_total.jpg')
+    fp.write_load_file(load_total.load_t, 'data_load/load_total.csv')
    # load_total.chargers_iswork = load.load_total.chargers_iswork
     
 #    print(load.load_data)
 #    print(sys_settings.chargers_iswork)
 #    print(load_total.load_t)
-    
+"""    
     for ld in load_list:
         figure_output = 'data_load/load' + str(ld.load_num) + '.jpg'
         file_output = 'data_load/load' + str(ld.load_num) + '.csv'
         fp.draw_plot(ld.load_data, 'power', figure_output=figure_output)
         fp.write_load_file(ld.load_data, file_output)
-    
+ """   
  #   load_total.load_t.to_excel('data_temp/l_data.xls')
 
-    fp.draw_plot(load_total.load_t, load_total.l_name, figure_output='data_load/load_total.jpg')
-    fp.write_load_file(load_total.load_t, 'data_load/load_total.csv')
+    
     
 if __name__ == '__main__':
     main()
