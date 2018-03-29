@@ -72,7 +72,7 @@ def calc_power(data, v1=None, v2=None, v3=None,
         if v2 and v3 and c2 and c3:
             fp.output_msg('Nan')
         else:
-            power =  data['volt'] * data['cur']
+            power =  (data['volt'] * data['cur']) / 1000
         return power
 
 def sel_period(data, index_col='time', interval=10, d_clip=2):
@@ -234,12 +234,20 @@ def data_col_rename(data, n, re):
     data0.rename(columns={n:re}, inplace=True)
     return data0
 
-def data_merge(df1, df2, col_name, col_list):
-    if col_name in df1.columns:
-        df1 = df1.drop(col_name, 1)#删除指定列负载数据
+def data_merge(df1, df2, **kwg):
+    select = 0
+    for x in kwg:
+        if x == 'col_name':
+            col_name = kwg[x]
+            if col_name in df1.columns:
+                df1 = df1.drop(col_name, 1)#删除指定列负载数据
+        if x == 'col_list':
+            col_list = kwg[x]
+            select = 1
     result = pd.concat([df1, df2], axis=1)
-    #留下col_list列表中的负载数据
-    result = result[col_list]
+    if select == 1:
+        #留下col_list列表中的负载数据
+        result = result[col_list]
     result = result.fillna(0)
     return result
 
@@ -247,17 +255,39 @@ def data_del_col(df, col_name):
     df[col_name] = 0
     return df
     
-def data_single_row_add(ticks, df, l_name, regularlist):
+def data_single_row_add(ticks, df, **kwg):
     n = 0
     d_sum = 0.0
+    select0 = 0
+    select1 = 0
+    select2 = 0
     df0 = df[:]
-    df0 = df.drop('time', 1)
+    for x in kwg:
+        if x == 'sum_name':
+            sum_name = kwg[x]
+        if x == 'del_col':
+            del_col = kwg[x]
+            df0 = df.drop(del_col, 1) 
+            select0 = 1
+        if x == 'regularlist':
+            regularlist = kwg[x]
+            select1 = 1
+        if x == 'add_col':
+            add_col = kwg[x]
+            select2 = 1
     if ticks <= len(df0):
-        for i in df0.iloc[ticks]:
-            d_sum += i * float(regularlist[n])
-            n += 1
-        df0.loc[ticks, [l_name]] = d_sum
-    df0['time'] = df['time']
+        if select1 == 1:
+            for i in df0.iloc[ticks]:
+                d_sum += i * float(regularlist[n])
+                n += 1
+        elif select2 == 1:
+            df0 = df0[add_col]
+            for i in df0.iloc[ticks]:
+                d_sum += i
+                n += 1
+        df0.loc[ticks, [sum_name]] = d_sum
+    if select0 ==1:
+        df0[del_col] = df[del_col]
     return df0
     
 class Datadiscovery():

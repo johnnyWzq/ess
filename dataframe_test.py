@@ -100,7 +100,9 @@ df1 = df1.fillna(0) #空值全部置0
 #df1.fillna(0)
 #df1['power'][df1['power'] == None] = 0
 #new_df['power'][df['power'] == None] = 0
-
+df2 = df2[0:18]
+df2[['volt','cur']] = df1[['volt','cur']]
+print(df2)
 '''
 new_df1 = new_df.add(s1, axis=0)
 l = list[df1, df2]

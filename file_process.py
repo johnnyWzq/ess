@@ -84,7 +84,7 @@ def draw_plot(data, commont_kinds, x_col, col_name, figure_output='data_load/loa
     plt.show()       
     
  '''
-def draw_plot(data, figure_output='data_load/loads.jpg', **col):
+def draw_plot(data, is_save=False, figure_output='data_load/loads.jpg', **col):
     unit = {'power':'kW', 'volt':'V', 'cur':'A', 'Lo':'kW', 'time':''}
     axis = []
     for c in col:
@@ -109,8 +109,8 @@ def draw_plot(data, figure_output='data_load/loads.jpg', **col):
   
     
     
-    
-    plt.savefig(figure_output, dpi=128)
+    if is_save == True:
+        plt.savefig(figure_output, dpi=128)
     plt.show()
     
     

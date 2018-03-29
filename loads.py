@@ -73,7 +73,7 @@ class Loads():
             #与load_pre合并
             load_cur = load_total.load_t[:]           
             load_total.load_t = dp.data_merge(load_cur, data,
-                                    'p'+str(self.load_num), load_total.col_list)
+                    col_name='p'+str(self.load_num), col_list=load_total.col_list)
             load_total.loads_link.append(self)
             load_total.update(self.load_num, self.state)
             fp.output_msg('sys_ticks = ' + str(sys_ticks) + ' The load' 
@@ -109,13 +109,15 @@ def main():
     import sys_control as sc
 
     from load_total import Loadtotal
+    from grid import Grid
     
     file_input = 'data_temp/charging_data1.csv'  
     sys_settings = Settings() 
     
     ticks_max = sys_settings.sample_interval * 12 #24h
     
-    
+    grid = Grid(ticks_max)
+
     load_total = Loadtotal(ticks_max, sys_settings.chargers_num) #创建代表总负载的dataframe  
     print("sys_ticks init:"+str(load_total.chargers_iswork))
     
@@ -140,7 +142,7 @@ def main():
         if i == ticks_test2:
             num = 2
             load2 = Loads(sys_settings, num)
-            load2.loading(load_total, ticks_test2)#, file_input)
+            load2.loading(load_total, ticks_test2, file_input)
             #if load2.load_pre.chargers_iswork[load2.load_num] == 1:
             #    load_total.chargers_iswork[load2.load_num] == 1
             #loads_link.append(load2)
@@ -175,6 +177,7 @@ def main():
         
         load_total.load_t = sc.loads_calc(i, load_total.load_t,
                                      load_total.l_name, sys_settings.load_regular)
+        grid.grid_data = sc.grid_calc(i, grid.grid_data, load_total.load_t)
 
         ld = load_total.loads_link.head
         while ld != 0:
@@ -186,11 +189,11 @@ def main():
             print('sys_ticks = ' + str(i), load_total.chargers_iswork)
         i += 1
         
-    fp.draw_plot(load_total.load_t, figure_output='data_load/load_total.jpg',
+    fp.draw_plot(load_total.load_t, True, figure_output='program_output/load_total.jpg',
                      y_axis=load_total.l_name)#, x_axis='time')
-    fp.write_load_file(load_total.load_t, 'data_load/load_total.csv')
+    fp.write_load_file(load_total.load_t, 'program_output/load_total.csv')
 
-    
+    grid.draw()
     
 if __name__ == '__main__':
     main()
