@@ -8,6 +8,7 @@ Created on Tue Mar 27 08:53:26 2018
 
 import pandas as pd
 import datetime
+import link_list as ll
 
 class Loadtotal():
     
@@ -41,14 +42,14 @@ class Loadtotal():
         
     def initialize_dynamic_settings(self, chargers_num):
         '''初始化系统变量设置'''
-
+        self.loads_link = ll.LinkList()
         self.chargers_iswork = [0] * (chargers_num + 1)#第一位为总负载
     #    self.load_regular = [1] * (chargers_num + 1)
         
-    def update_settings(self, num, state='on'):
-        if state == 'on':
+    def update(self, num, state):
+        if state == True:
             self.chargers_iswork[num] = 1
-        elif state == 'off':
+        elif state == False:
             self.chargers_iswork[num] = 0
             
 '''test'''

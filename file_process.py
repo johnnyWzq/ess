@@ -84,9 +84,13 @@ def draw_plot(data, commont_kinds, x_col, col_name, figure_output='data_load/loa
     plt.show()       
     
  '''
-def draw_plot(data, y_col, x_col=None, figure_output='data_load/loads.jpg'):
+def draw_plot(data, figure_output='data_load/loads.jpg', **col):
     unit = {'power':'kW', 'volt':'V', 'cur':'A', 'Lo':'kW', 'time':''}
-    y_axis = data[y_col].copy()
+    axis = []
+    for c in col:
+        axis.append(col[c])
+        
+    y_axis = data[axis[0]].copy()
     y_axis.sort_values(ascending = False)
         
     plt.rcParams['font.sans-serif'] = ['SimHei'] #用来正常显示中文标签
@@ -94,14 +98,16 @@ def draw_plot(data, y_col, x_col=None, figure_output='data_load/loads.jpg'):
     
     plt.figure()
     
-    if x_col == None:
+    xy = len(axis)
+    if xy == 1:
         plt.plot(y_axis)
+        plt.ylabel(axis[0] + '(' + unit[axis[0]] + ')')
     else:
-        x_axis = data[x_col].copy()
+        x_axis = data[axis[1]].copy()
         plt.plot(x_axis, y_axis)
-        plt.xlabel(x_col + '(' + unit[x_col] + ')')
+        plt.xlabel(axis[1] + '(' + unit[axis[1]] + ')')
+  
     
-    plt.ylabel(y_col + '(' + unit[y_col] + ')')
     
     
     plt.savefig(figure_output, dpi=128)
@@ -109,16 +115,18 @@ def draw_plot(data, y_col, x_col=None, figure_output='data_load/loads.jpg'):
     
     
 def deal_err(msg):
-    print('msg')
+    print(msg)
     
-    
+def output_msg(msg):
+    print(msg
+          )
 '''
 test
 '''
 
 def main():
     data = read_load_file(1, 'data_temp/charging_data1.csv')
-    draw_plot(data, 'volt','cur', figure_output='data_load/loads.jpg')
+    draw_plot(data, figure_output='data_load/loads.jpg', y_axis='volt')#,x_axis='cur')
     
 if __name__ == '__main__':
     main()

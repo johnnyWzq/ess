@@ -127,7 +127,7 @@ class LinkList():
 
         if self.is_empty():
             print ('Linklist is empty.')
-        return
+            return
 
         p = self.head
         i = 0
@@ -155,6 +155,8 @@ if __name__=="__main__":
        l.getitem(1)
        sd = l.getlength()
        print(sd)
+       si = l.index(50)
+       print(si)
        p = l.head
        while p != 0:
            print(p.data)

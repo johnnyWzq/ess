@@ -8,6 +8,7 @@ Created on Sun Mar 25 13:41:14 2018
 import time
 import numpy as np
 import pandas as pd
+import file_process as fp
 
 from scipy.interpolate import lagrange #导入拉格朗日插值函数
 import math
@@ -69,7 +70,7 @@ def calc_power(data, v1=None, v2=None, v3=None,
                       c1=None, c2=None, c3=None):
         '''根据电压电流计算功率'''
         if v2 and v3 and c2 and c3:
-            print('Nan')
+            fp.output_msg('Nan')
         else:
             power =  data['volt'] * data['cur']
         return power
@@ -99,7 +100,7 @@ def sel_period(data, index_col='time', interval=10, d_clip=2):
             t_stamp_pre = t_stamp
             index_pre = index
     except:
-        print("时间格式有误！")
+        fp.output_msg("时间格式有误！")
 
     #选择第2个数据片
     d_clip %= 2 
@@ -151,7 +152,7 @@ def complete_data(data, sample_interval, sel_col):
         if len(data) > sample_interval:#超出,删除超出的后面数据部分
             data = data[0:sample_interval]
     else:
-        print("Error, the data is too big!")
+        fp.output_msg("Error, the data is too big!")
     return data
 
 def filter_data(data, sample_interval, sel_col):
@@ -166,7 +167,7 @@ def filter_data(data, sample_interval, sel_col):
         if len(data) > sample_interval:#超出,删除超出的后面数据部分
             data = data[0:sample_interval]
     else:
-        print('the data is too small!')
+        fp.output_msg('the data is too small!')
     return data
 
 def insert_data(data, sel_col, n):
