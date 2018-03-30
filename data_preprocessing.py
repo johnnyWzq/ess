@@ -296,6 +296,12 @@ def dfs_col_add(ticks, data1, data2, add1_col, add2_col):
     data1.loc[ticks, [add1_col]] = s1[0] + s2[0]
     return data1
 
+def dfs_unit_limit(ticks, data, l_col, limit):
+    s1 = data.loc[ticks, [l_col]]
+    if s1[0] > limit:
+        data.loc[ticks, [l_col]] = limit
+    return data
+    
 class Datadiscovery():
     """对数据做简单探索"""
     

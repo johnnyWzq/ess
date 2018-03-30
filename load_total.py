@@ -12,7 +12,7 @@ import link_list as ll
 
 class Loadtotal():
     
-    def __init__(self, data_lens, col_num, l_name='Lo'):
+    def __init__(self, data_lens, col_num, l_name='L0'):
 
         col_list = ['p'] * col_num
         for i in range(col_num):

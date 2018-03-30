@@ -116,7 +116,7 @@ def main():
     
     ticks_max = sys_settings.sample_interval * 12 #24h
     
-    grid = Grid(ticks_max)
+    grid0 = Grid(ticks_max) #创建电网侧负荷对象，仅考虑配电参数限制
 
     load_total = Loadtotal(ticks_max, sys_settings.chargers_num) #创建代表总负载的dataframe  
     print("sys_ticks init:"+str(load_total.chargers_iswork))
@@ -142,7 +142,7 @@ def main():
         if i == ticks_test2:
             num = 2
             load2 = Loads(sys_settings, num)
-            load2.loading(load_total, ticks_test2, file_input)
+            load2.loading(load_total, ticks_test2)#, file_input)
             #if load2.load_pre.chargers_iswork[load2.load_num] == 1:
             #    load_total.chargers_iswork[load2.load_num] == 1
             #loads_link.append(load2)
@@ -177,8 +177,9 @@ def main():
         
         load_total.load_t = sc.loads_calc(i, load_total.load_t,
                                      load_total.l_name, sys_settings.load_regular)
-        grid.grid_data = sc.grid_calc(i, grid.grid_data, load_total.load_t,
-                                      add1_col=grid.l_name, add2_col=load_total.l_name)
+        grid0.grid_data = sc.grid_calc(i, grid0.grid_data, load_total.load_t,
+                                      add1_col=grid0.l_name, add2_col=load_total.l_name,
+                                      sys_s=sys_settings)
 
         ld = load_total.loads_link.head
         while ld != 0:
@@ -194,7 +195,7 @@ def main():
                      y_axis=load_total.l_name)#, x_axis='time')
     fp.write_load_file(load_total.load_t, 'program_output/load_total.csv')
 
-    grid.draw()
+    grid0.draw()
     
 if __name__ == '__main__':
     main()
