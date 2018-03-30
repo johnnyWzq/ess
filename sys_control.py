@@ -21,19 +21,30 @@ def loads_calc(sys_ticks, load_pre_data, l_name, load_regular):
                           del_col='time', sum_name=l_name, regularlist=load_regular)
     return data
 
-def grid_calc(sys_ticks, grid_data, load_data):
+def grid_calc(sys_ticks, grid_data, load_data, **kwg):
     '''
     计算当前时刻值行的电网侧输出功率值，并计算截止到当前时刻合计的电费
     使用方式：按指定的频率循环调用
     sys_ticks为系统运行至当前采样数,待计算行
 
     '''
-    grid_data = dp.data_merge(grid_data, load_data)
+    for x in kwg:
+        if x == 'add1_col':
+            add1_col = kwg[x]
+        if x == 'add2_col':
+            add2_col = kwg[x]
+    grid_data = dp.dfs_col_add(sys_ticks, grid_data, load_data, add1_col, add2_col)
+    return grid_data
+
+'''
+    grid_data = dp.data_merge(grid_data, load_data, col_list=col_list_g)
     grid_data = dp.data_single_row_add(sys_ticks, grid_data, sum_name='grid',
-                                       del_col=['time', 'price_coe', 'bills'],
+                                       del_col=['bills', 'price_coe', 'time'],
                                        add_col=['grid', 'Lo'])
                                         # del_col=['volt','cur'])
+                                   
     return grid_data
+'''
 
 '''test'''
 

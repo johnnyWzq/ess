@@ -16,16 +16,19 @@ class Grid():
     def __init__(self, data_lens, **coe):
         
         col_list = []
-        col_list.insert(0, 'grid')
-        col_list.insert(0, 'bills')
         col_list.insert(0, 'price_coe')
+        col_list.insert(0, 'bills')
+        col_list.insert(0, 'grid') 
         col_list.insert(0, 'time')#增加时间列
         self.grid_data = pd.DataFrame(columns = col_list) #创建代表总电网侧的dataframe 
+        self.col_list = col_list
+        self.l_name = 'grid'
         self.load_ticks_max = data_lens
         self.grid_data['index'] = range(data_lens)
         self.grid_data = self.grid_data.set_index(['index'])
         self.grid_data = self.grid_data.fillna(0)
         self.grid_data['price_coe'] = [1] * data_lens
+           
         #时间序列按采样周期赋值
         if data_lens <= 87600: #最高采样周期3600/h
             dlt = float(86400/data_lens)
@@ -51,7 +54,7 @@ class Grid():
         self.grid_data['price_coe'] = [1] * self.data_lens
         
     def draw(self):
-        fp.draw_plot(self.grid_data, figure_output='program_output/gird.jpg', y_axis='Grid')#,x_axis='cur')
+        fp.draw_plot(self.grid_data, figure_output='program_output/gird.jpg', y_axis='grid')#,x_axis='cur')
             
 '''test'''
 

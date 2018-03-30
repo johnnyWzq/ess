@@ -177,7 +177,8 @@ def main():
         
         load_total.load_t = sc.loads_calc(i, load_total.load_t,
                                      load_total.l_name, sys_settings.load_regular)
-        grid.grid_data = sc.grid_calc(i, grid.grid_data, load_total.load_t)
+        grid.grid_data = sc.grid_calc(i, grid.grid_data, load_total.load_t,
+                                      add1_col=grid.l_name, add2_col=load_total.l_name)
 
         ld = load_total.loads_link.head
         while ld != 0:

@@ -267,7 +267,7 @@ def data_single_row_add(ticks, df, **kwg):
             sum_name = kwg[x]
         if x == 'del_col':
             del_col = kwg[x]
-            df0 = df.drop(del_col, 1) 
+            df0 = df0.drop(del_col, 1)
             select0 = 1
         if x == 'regularlist':
             regularlist = kwg[x]
@@ -290,6 +290,12 @@ def data_single_row_add(ticks, df, **kwg):
         df0[del_col] = df[del_col]
     return df0
     
+def dfs_col_add(ticks, data1, data2, add1_col, add2_col):
+    s1 = data1.loc[ticks, [add1_col]]
+    s2 =  data2.loc[ticks, [add2_col]]
+    data1.loc[ticks, [add1_col]] = s1[0] + s2[0]
+    return data1
+
 class Datadiscovery():
     """对数据做简单探索"""
     

@@ -48,7 +48,9 @@ df3.loc[1, ['p3']] = 4
 df4 = pd.read_excel('data/model.xls', index_col=0)
 df4.rename(columns={'power':'p4'}, inplace=True)
 #df4 = reset_index(60, df4)
+
 df4.loc[1, ['p4']] = 6
+e= df4.loc[1, ['p4']]
 
 a = []
 a.append(df1)
@@ -59,8 +61,9 @@ h = 'p3'
 if h in df3.columns:
     print(h)
 
-q=['x','y','z']
-print(q)
+q=['xq','yd','zr']
+for i in range(len(q)):
+    print(q[i])
 
 l = range(1, 10)
 
@@ -101,7 +104,11 @@ df1 = df1.fillna(0) #空值全部置0
 #df1['power'][df1['power'] == None] = 0
 #new_df['power'][df['power'] == None] = 0
 df2 = df2[0:18]
-df2[['volt','cur']] = df1[['volt','cur']]
+ls = ['volt','cur']
+df2[ls] = df1[ls]
+
+
+
 print(df2)
 '''
 new_df1 = new_df.add(s1, axis=0)
