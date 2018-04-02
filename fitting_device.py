@@ -83,10 +83,10 @@ class FittingDevice():
         pre_charge, pre_discharge, discharge = 0, 0, 0
         pre_rest, rest = 0, 0
         charge = int(-100)
-        E0 = 4#初始能量
+        E0 = 0#初始能量
         En = 4#额定能量
         v_c = 1#充电速度
-        v_d = 2#放电速度
+        v_d = 1#放电速度
         t = 1#单位时间片
         Ecx = v_c * t#单位时间可以充入的能量
         Edx = v_d * t#单位时间可以放出的能量
@@ -130,6 +130,7 @@ class FittingDevice():
                 Es = Es - Exd
                 Exd = min(Edx, Es)
                 Exc = min(Ecx, En-Es)
+                charge = discharge
             elif charge > pre_charge:
                 if Exc == 0:
                     act.append('rest')
@@ -151,39 +152,6 @@ class FittingDevice():
         print(discharge)
         return discharge
         
-        '''
-        找不到充电时刻
-        k = 3
-        price = self.data['price_coe']
-        maxprofit_d = pd.DataFrame(index=range(len(price)), columns = range(0, k))
-        maxprofit_d = maxprofit_d.fillna(int(0))     
-        minprofit_c = pd.DataFrame(index=range(len(price)), columns = range(0, k))
-        minprofit_c = maxprofit_d.fillna(int(0))        
-        time_d = []
-        time_c = []
-        diff_c = price[0]
-        diff_d = price[0]
-        for i in range(1, len(price)):
-            diff1_c = price[i] - diff_c
-            diff1_d = price[i] - diff_c
-            for j in range(1, k):
-                maxprofit_d.iat[i,j] = max(maxprofit_d.iat[i-1,j],
-                               maxprofit_d.iat[i-1,j-1]+diff1_d)
-
-            diff_c = price[i]
-            
-            if(maxprofit_d.iat[i-1, k-1] < maxprofit_d.iat[i, k-1]):
-                time_d.append(i)
-
-        print('\n' + str(time_d))
-        print(maxprofit_d)
-        '''
-        '''
-        print('\n' + str(time_c))
-        print(minprofit_c)
-        '''
-        return maxprofit_d  
-        
 
     def draw(self):
         fp.draw_plot(self.data, figure_output='program_output/gird.jpg',
@@ -193,7 +161,7 @@ class FittingDevice():
 
 
 def main():
-    df = FittingDevice(6)
+    df = FittingDevice(5)
     df0 = pd.read_excel('data/model1.xls', index_col=0)
     df0 = df0.fillna(0)
     p = df0['price_coe']
