@@ -25,7 +25,7 @@ class Energybox():
         self.discharge_volt_end = 562
         self.circle = 3000
         self.soc_limited = 0.2
-        self.sample_interval = sys_settings.sample_interval
+#        self.sample_interval = sys_settings.sample_interval
         
         self.initialize_dynamic_settings()
         

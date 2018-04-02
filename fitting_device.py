@@ -46,13 +46,44 @@ class FittingDevice():
 
     def set_targe(self, targe):
         self.targe = targe
+        
+    def charge_rate_calc(self):
+        """
+        计算在一天电价变化的情况下，电池充放电倍率预期最大最小值
+        """
+        price_list = self.data['price_coe']
+        price_list = list(price_list.sort_values())
+        self.high_price = price_list[:-1]
+        self.low_price = price_list[0]
+        if self.high_price == self.low_price:
+            high_price_num = len(price_list)
+            low_price_num = high_price_num
+        else:
+            high_price_num = 1
+            low_price_num = 1
+            for i in range(len(price_list)):
+                if price_list[i+1] == price_list[i]:
+                    low_price_num += 1
+                else:
+                    break
+            for i in range(len(price_list)):
+                if price_list[0-i-1] == price_list[0-i-2]:
+                    high_price_num += 1
+                else:
+                    break
+        self.max_charge_v = float(self.ebx.cap_Nominal * self.ebx.soc_limited / low_price_num) /self.ebx.volt_Nominal
+        self.max_discharge_v = float(self.ebx.cap_Nominal * self.ebx.soc_limited / high_price_num) / self.ebx.volt_Nominal
+        if self.max_charge_v >= self.ebx.charge_rate_limited:
+            self.max_charge_v = self.ebx.charge_rate_limited
+        if self.max_discharge_v >= self.ebx.discharge_rate_limited:
+            self.max_discharge_v = self.ebx.discharge_rate_limited
             
-    def fitting(self, data, col_name):
+        
+    def day_cost_fitting(self, data, col_name):
         l0 = data[:]
         l0 = l0[[col_name]]
-        if self.targe == 'day_cost':
-            g0 = self.day_cost_algorithm(self, l0)
-            self.data[self.col_list] = g0[self.col_list]
+        g0 = self.day_cost_algorithm(self, l0)
+        self.data[self.col_list] = g0[self.col_list]
             
     def day_cost_algorithm(self, data):
         """
@@ -71,15 +102,7 @@ class FittingDevice():
         return df
         
     def max_profit(self):
-        '''
-                for price in self.data['price_coe']:
-            pre_charge = charge
-            charge = max(pre_discharge-price, pre_charge)
-            pre_discharge = discharge
-            discharge = max(pre_charge+price, pre_discharge)
-        
-            print(price, charge, discharge)
-        '''
+
         pre_charge, pre_discharge, discharge = 0, 0, 0
         pre_rest, rest = 0, 0
         charge = int(-100)
@@ -140,7 +163,7 @@ class FittingDevice():
                 Exc = min(Ecx, En-Es)
                 Exd = min(Edx, Es)
                 discharge = charge #修正下一次pre_discharge
-               # rest = charge
+
             else:
                 act.append('rest')
 
@@ -161,17 +184,21 @@ class FittingDevice():
 
 
 def main():
-    df = FittingDevice(5)
+    from energy_box import Energybox
+    
+    ebox = Energybox(250)
+    df = FittingDevice(100)
     df0 = pd.read_excel('data/model1.xls', index_col=0)
     df0 = df0.fillna(0)
     p = df0['price_coe']
     l = df0['L0']
-    df.input_conditon(ebx=2, price=p)
+    df.input_conditon(price=p, ebx=ebox)
     df.set_targe('day_cost')
     df.day_cost_algorithm(l)
     print(df.data)
    # print(df.ebx , df.targe, '\n')
     c = df.max_profit()
+    df.charge_rate_calc()
 
 if __name__ == '__main__':
     main()
