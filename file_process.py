@@ -85,7 +85,7 @@ def draw_plot(data, commont_kinds, x_col, col_name, figure_output='data_load/loa
     
  '''
 def draw_plot(data, is_save=False, figure_output='data_load/loads.jpg', **col):
-    unit = {'power':'kW', 'volt':'V', 'cur':'A', 'Lo':'kW', 'grid':'kW', 'time':''}
+    unit = {'power':'kW', 'volt':'V', 'cur':'A', 'L0':'kW', 'G0':'kW', 'time':''}
     axis = []
     for c in col:
         axis.append(col[c])

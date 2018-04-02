@@ -255,6 +255,19 @@ def data_del_col(df, col_name):
     df[col_name] = 0
     return df
     
+def data_single_row_add(ticks, df, l_name, regularlist):
+    n = 0
+    d_sum = 0.0
+    df0 = df[:]
+    df0 = df.drop('time', 1)
+    if ticks <= len(df0):
+        for i in df0.iloc[ticks]:
+            d_sum += i * float(regularlist[n])
+            n += 1
+        df0.loc[ticks, [l_name]] = d_sum
+    df0['time'] = df['time']
+    return df0
+"""
 def data_single_row_add(ticks, df, **kwg):
     n = 0
     d_sum = 0.0
@@ -289,13 +302,20 @@ def data_single_row_add(ticks, df, **kwg):
     if select0 ==1:
         df0[del_col] = df[del_col]
     return df0
-    
+"""
+   
 def dfs_col_add(ticks, data1, data2, add1_col, add2_col):
     s1 = data1.loc[ticks, [add1_col]]
     s2 =  data2.loc[ticks, [add2_col]]
     data1.loc[ticks, [add1_col]] = s1[0] + s2[0]
     return data1
 
+def dfs_unit_limit(ticks, data, l_col, limit):
+    s1 = data.loc[ticks, [l_col]]
+    if s1[0] > limit:
+        data.loc[ticks, [l_col]] = limit
+    return data
+    
 class Datadiscovery():
     """对数据做简单探索"""
     

@@ -35,27 +35,30 @@ df1 = pd.read_excel('data/blank.xls', index_col=0)
 df1.rename(columns={'power':'p1'}, inplace=True)
 
 df2 = pd.read_excel('data/model.xls', index_col=0)
-df2 = df2[['power']]
+df2 = df2[['price_coe']]
 df2 = reset_index(10, df2)
-p = 'power'
+p = 'price_coe'
 df2 = data_col_rename(df2, p, 'p'+str(2))#df2.rename(columns={'power':'p2'}, inplace=True)
 
 df3 = pd.read_excel('data/model.xls', index_col=0)
-df3.rename(columns={'power':'p3'}, inplace=True)
+df3.rename(columns={'price_coe':'p3'}, inplace=True)
 df3 = reset_index(40, df3)
 df3.loc[1, ['p3']] = 4
 
 df4 = pd.read_excel('data/model.xls', index_col=0)
-df4.rename(columns={'power':'p4'}, inplace=True)
+df4.rename(columns={'price_coe':'p4'}, inplace=True)
 #df4 = reset_index(60, df4)
 
-df4.loc[1, ['p4']] = 6
+df4.loc[1, ['p4']] = df4.loc[1, ['p4']] - 3
 e= df4.loc[1, ['p4']]
 
+df4 =  df4[['p4']]
+print(df4)
 a = []
 a.append(df1)
 a.append(df2)
 
+r = max(-1,2,4,-2)
 
 h = 'p3'
 if h in df3.columns:
@@ -86,7 +89,7 @@ s1 = new_df['p2']
 s = df3['p3']
 df3['p3'] = 1
 #h = df3.loc['p3']
-m = df3.loc[50]
+m = df3.loc[40]
 x = m['p3']
 
 y = df3.iloc[4]

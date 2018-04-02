@@ -18,7 +18,7 @@ def loads_calc(sys_ticks, load_pre_data, l_name, load_regular):
     load_regular为负载调整指令集
     '''
     data = dp.data_single_row_add(sys_ticks, load_pre_data, 
-                          del_col='time', sum_name=l_name, regularlist=load_regular)
+                                          l_name, load_regular)
     return data
 
 def grid_calc(sys_ticks, grid_data, load_data, **kwg):
@@ -30,21 +30,33 @@ def grid_calc(sys_ticks, grid_data, load_data, **kwg):
     '''
     for x in kwg:
         if x == 'add1_col':
-            add1_col = kwg[x]
+            add1_col = kwg[x] #被计算量，当前代表电网功率的grid
         if x == 'add2_col':
             add2_col = kwg[x]
+        if x == 'sys_s':
+            sys_settings = kwg[x]
     grid_data = dp.dfs_col_add(sys_ticks, grid_data, load_data, add1_col, add2_col)
+    grid_data = grid_limit(sys_ticks, grid_data, limit_col=add1_col, sys_s=sys_settings)
     return grid_data
 
-'''
-    grid_data = dp.data_merge(grid_data, load_data, col_list=col_list_g)
-    grid_data = dp.data_single_row_add(sys_ticks, grid_data, sum_name='grid',
-                                       del_col=['bills', 'price_coe', 'time'],
-                                       add_col=['grid', 'Lo'])
-                                        # del_col=['volt','cur'])
-                                   
-    return grid_data
-'''
+
+def grid_limit(sys_ticks, grid_data, **kwg):
+    """
+    考虑配电侧参数限制，在根据负载计算出来的grid_data基础上进行处理
+    """
+    for x in kwg:
+        if x == 'sys_s':
+            sys_s = kwg[x]
+            grid_cap = sys_s.cap_limit
+        if x == 'limit_col':
+            limit_col = kwg[x]
+    return (dp.dfs_unit_limit(sys_ticks, grid_data, limit_col, grid_cap))
+
+def day_cost_algorithm(data1, data2):
+    """
+    进行计算，并将计算结果分别放入data1，data2的第一列
+    """
+
 
 '''test'''
 
