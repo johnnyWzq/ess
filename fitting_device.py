@@ -83,10 +83,10 @@ class FittingDevice():
         pre_charge, pre_discharge, discharge = 0, 0, 0
         pre_rest, rest = 0, 0
         charge = int(-100)
-        E0 = 0#初始能量
-        En = 3#额定能量
-        v_c = 2#充电速度
-        v_d = 1#放电速度
+        E0 = 4#初始能量
+        En = 4#额定能量
+        v_c = 1#充电速度
+        v_d = 2#放电速度
         t = 1#单位时间片
         Ecx = v_c * t#单位时间可以充入的能量
         Edx = v_d * t#单位时间可以放出的能量
@@ -95,7 +95,6 @@ class FittingDevice():
         Exc = min(Ecx, En-E0)#单位时间允许充入的能量
         act = []
         i = 0
-        
         for price in self.data['price_coe']:      
             pre_charge = charge
             pre_rest = rest
@@ -105,10 +104,10 @@ class FittingDevice():
             d_cost = Exd * price
             #如果本次不能充电，则将充电成本设置为放电成本
             #如果本次不能放电，则将放电成本设置为充电成本
-            if c_cost != 0:
+            if Exc != 0:
                 #charge = max(pre_charge, pre_rest-c_cost)
                 charge = max(pre_charge-c_cost, pre_discharge-c_cost, pre_rest-c_cost)
-            if d_cost != 0:
+            if Exd != 0:
                 #discharge = max(pre_charge+d_cost, pre_discharge)
                 discharge = max(pre_charge+d_cost, pre_discharge+d_cost)#weishenmbunengjia!!!
             print('Exc='+str(Exc) + ' Exd='+str(Exd)+
@@ -116,7 +115,7 @@ class FittingDevice():
             
             
             
-            rest = max(pre_charge, pre_discharge, pre_rest)
+            rest = max(pre_charge, pre_discharge)
             """
             charge = max(pre_charge-c_cost, pre_discharge-c_cost, pre_rest-c_cost)
             discharge = max(pre_charge+d_cost, pre_discharge+d_cost, pre_rest+d_cost)
@@ -139,6 +138,8 @@ class FittingDevice():
                 Es = Es + Exc
                 Exc = min(Ecx, En-Es)
                 Exd = min(Edx, Es)
+                discharge = charge #修正下一次pre_discharge
+               # rest = charge
             else:
                 act.append('rest')
 
@@ -193,7 +194,7 @@ class FittingDevice():
 
 def main():
     df = FittingDevice(6)
-    df0 = pd.read_excel('data/model.xls', index_col=0)
+    df0 = pd.read_excel('data/model1.xls', index_col=0)
     df0 = df0.fillna(0)
     p = df0['price_coe']
     l = df0['L0']

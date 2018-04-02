@@ -39,10 +39,6 @@ def grid_calc(sys_ticks, grid_data, load_data, **kwg):
     grid_data = grid_limit(sys_ticks, grid_data, limit_col=add1_col, sys_s=sys_settings)
     return grid_data
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 9328d41f0aac9581bcf952ff0af18e518b8c6e7d
 def grid_limit(sys_ticks, grid_data, **kwg):
     """
     考虑配电侧参数限制，在根据负载计算出来的grid_data基础上进行处理
@@ -59,13 +55,6 @@ def day_cost_algorithm(data1, data2):
     """
     进行计算，并将计算结果分别放入data1，data2的第一列
     """
-
-<<<<<<< HEAD
-=======
-
-
-
->>>>>>> 9328d41f0aac9581bcf952ff0af18e518b8c6e7d
 
 '''test'''
 
