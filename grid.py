@@ -20,12 +20,10 @@ class Grid():
         col_list.insert(0, 'bills')
         col_list.insert(0, 'G0') 
         col_list.insert(0, 'time')#增加时间列
-        self.grid_data = pd.DataFrame(columns = col_list) #创建代表总电网侧的dataframe 
+        self.grid_data = pd.DataFrame(index=range(data_lens), columns = col_list) #创建代表总电网侧的dataframe 
         self.col_list = col_list
         self.l_name = 'G0'
         self.load_ticks_max = data_lens
-        self.grid_data['index'] = range(data_lens)
-        self.grid_data = self.grid_data.set_index(['index'])
         self.grid_data = self.grid_data.fillna(0)
         self.grid_data['price_coe'] = [1] * data_lens
            
