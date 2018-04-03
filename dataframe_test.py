@@ -45,7 +45,7 @@ def maxProfit(prices):
             print(i, price, buy, sell)
             i += 1
         return sell
-p = [1,1,1,1,1,2,2,2,2,2,2,2,2,2,3,3,3,3,3,3,3,3,3,3,3,3,0,0,0,0,0,0,0,0,2,2,2,2,2,2]
+p = [1,2,3,0,2]
 test = maxProfit(p)
 print(test)
 
@@ -69,6 +69,8 @@ df4.rename(columns={'price_coe':'p4'}, inplace=True)
 
 df4.loc[1, ['p4']] = df4.loc[1, ['p4']] - 3
 e= df4.loc[1, ['p4']]
+f = df4.iloc[[1,2],[2]]
+j = 0
 
 df4 =  df4[['p4']]
 print(df4)

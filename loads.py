@@ -111,6 +111,7 @@ def main():
     from load_total import Loadtotal
     from grid import Grid
     from energy_box import Energybox
+    from fitting_device import FittingDevice
     
     file_input = 'data_temp/charging_data1.csv'  
     sys_settings = Settings() 
@@ -121,7 +122,10 @@ def main():
 
     load_total = Loadtotal(ticks_max, sys_settings.chargers_num) #创建代表总负载的dataframe
     
-    ebox = Energybox(sys_settings.sample_interval, grid0.grid_data['price_coe'])
+    ebox = Energybox(sys_settings.sample_interval)
+    
+    fitting = FittingDevice(ebox, grid0.grid_data['price_coe'], 100, ticks_max)
+    fitting.set_targe('day_cost')
     
     print("sys_ticks init:"+str(load_total.chargers_iswork))
     
@@ -193,7 +197,7 @@ def main():
         grid0.grid_data = sc.grid_calc(i, grid0.grid_data, load_total.load_t,
                                       add1_col=grid0.l_name, add2_col=load_total.l_name,
                                       sys_s=sys_settings)
-        
+        fitting.sys_fitting(i, ebox, load_total.load_t)
         i += 1
         
     fp.draw_plot(load_total.load_t, True, figure_output='program_output/load_total.jpg',
