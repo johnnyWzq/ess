@@ -12,7 +12,7 @@ import link_list as ll
 
 class Loadtotal():
     
-    def __init__(self, data_lens, col_num, l_name='L0'):
+    def __init__(self, data_lens, col_num, l_name='L0', input_mode='in'):
 
         col_list = ['p'] * col_num
         for i in range(col_num):
@@ -37,6 +37,7 @@ class Loadtotal():
             self.load_t['time'] = tl
          
         self.initialize_dynamic_settings(col_num)
+        self.input_mode = input_mode
         
     def initialize_dynamic_settings(self, chargers_num):
         '''初始化系统变量设置'''
@@ -44,11 +45,25 @@ class Loadtotal():
         self.chargers_iswork = [0] * (chargers_num + 1)#第一位为总负载
     #    self.load_regular = [1] * (chargers_num + 1)
         
-    def update(self, num, state):
+    def loads_state_update(self, num, state):
         if state == True:
             self.chargers_iswork[num] = 1
         elif state == False:
             self.chargers_iswork[num] = 0
+            
+    def loads_value_update(self, ticks, **load_value):
+        """
+        从外部接口获取负载值，更新当前时刻的负载值，并添加进负载表
+        
+        """
+        if self.input_mode == 'out':
+            i = 1
+            for num in self.chargers_iswork:
+                if num == 1:
+                    self.load_t.loc[i, [self.col_list[i+1]]] = load_value[i]
+            self.load_t.loc[ticks, [self.l_name]] = load_value[0]
+        return 
+        
             
 '''test'''
 

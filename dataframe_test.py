@@ -30,6 +30,24 @@ def data_col_rename(data, n, re):
     data.rename(columns={n:re}, inplace=True)
     return data
 
+def maxProfit(prices):
+        """
+        :type prices: List[int]
+        :rtype: int
+        """
+        buy, pre_buy, sell, pre_sell, rest, pre_rest = 0, 0, 0, 0, 0, 0
+        i = 0
+        for price in prices:
+            buy = max(pre_rest-price, pre_buy)
+            pre_sell = sell
+            sell = max(pre_buy+price, pre_sell)
+            rest = max(pre_sell, pre_rest)
+            print(i, price, buy, sell)
+            i += 1
+        return sell
+p = [1,1,1,1,1,2,2,2,2,2,2,2,2,2,3,3,3,3,3,3,3,3,3,3,3,3,0,0,0,0,0,0,0,0,2,2,2,2,2,2]
+test = maxProfit(p)
+print(test)
 
 df1 = pd.read_excel('data/blank.xls', index_col=0)
 df1.rename(columns={'power':'p1'}, inplace=True)

@@ -9,16 +9,20 @@ Created on Mon Mar 26 20:14:43 2018
 import data_preprocessing as dp
 
         
-def loads_calc(sys_ticks, load_pre_data, l_name, load_regular):
+def loads_calc(sys_ticks, load_pre_data, l_name, load_regular, input_mode='in'):
     '''
     计算当前时刻值行的总负载值，并返回负载集
     使用方式：按指定的频率循环调用
     sys_ticks为系统运行至当前采样数,待计算行
     load_pre为当前时刻前的负载数据
     load_regular为负载调整指令集
+    input_mode为in代表数据从仿真系统文件来，out为外部接口采集获取
     '''
-    data = dp.data_single_row_add(sys_ticks, load_pre_data, 
+    if input_mode == 'in':
+        data = dp.data_single_row_add(sys_ticks, load_pre_data, 
                                           l_name, load_regular)
+    elif input_mode == 'out':
+        data = load_pre_data
     return data
 
 def grid_calc(sys_ticks, grid_data, load_data, **kwg):
@@ -68,7 +72,7 @@ def main():
     df1.rename(columns={'power':'grid'}, inplace=True)
     
     df2 = pd.read_excel('data/model.xls', index_col=0)
-    df2 = df2[['power']]
+    df2 = df2[['bills']]
    # df2 = dp.reset_index(df2, 10)
     p = 'power'
     df2 = dp.data_col_rename(df2, p, 'p'+str(2))#df2.rename(columns={'power':'p2'}, inplace=True)

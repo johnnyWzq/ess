@@ -75,7 +75,7 @@ class Loads():
             load_total.load_t = dp.data_merge(load_cur, data,
                     col_name='p'+str(self.load_num), col_list=load_total.col_list)
             load_total.loads_link.append(self)
-            load_total.update(self.load_num, self.state)
+            load_total.loads_state_update(self.load_num, self.state)
             fp.output_msg('sys_ticks = ' + str(sys_ticks) + ' The load' 
                           + str(self.load_num) + ' is on.')
         else:
@@ -91,7 +91,7 @@ class Loads():
         #self.load_pre.update_settings(self.load_num, 'off')
         load_total.load_t = dp.data_del_col(load_total.load_t, 'p'+str(self.load_num))
         load_total.loads_link.delete(load_total.loads_link.index(self))
-        load_total.update(self.load_num, self.state)
+        load_total.loads_state_update(self.load_num, self.state)
         fp.output_msg('sys_ticks = ' + str(sys_ticks) + " The load" + str(self.load_num) + " is off.")
         
     def loads_update(self,load_total, sys_ticks):
@@ -110,6 +110,7 @@ def main():
 
     from load_total import Loadtotal
     from grid import Grid
+    from energy_box import Energybox
     
     file_input = 'data_temp/charging_data1.csv'  
     sys_settings = Settings() 
@@ -118,7 +119,10 @@ def main():
     
     grid0 = Grid(ticks_max) #创建电网侧负荷对象，仅考虑配电参数限制
 
-    load_total = Loadtotal(ticks_max, sys_settings.chargers_num) #创建代表总负载的dataframe  
+    load_total = Loadtotal(ticks_max, sys_settings.chargers_num) #创建代表总负载的dataframe
+    
+    ebox = Energybox(sys_settings.sample_interval, grid0.grid_data['price_coe'])
+    
     print("sys_ticks init:"+str(load_total.chargers_iswork))
     
     
@@ -130,65 +134,66 @@ def main():
     ticks_test6 = 800
     ticks_test5 = 1500
     for i in range(1, ticks_max):
+        if (load_total.input_mode == 'in'):
+            if i == ticks_test1:
+                num = 1
+                load = Loads(sys_settings, num)
+                load.loading(load_total, ticks_test1)#, file_input)
+               # if load.load_pre.chargers_iswork[load.load_num] == 1:
+               #     load_total.chargers_iswork[load.load_num] == 1
+               # loads_link.append(load)
+                print('sys_ticks = ' + str(i), load_total.chargers_iswork)
+            if i == ticks_test2:
+                num = 2
+                load2 = Loads(sys_settings, num)
+                load2.loading(load_total, ticks_test2)#, file_input)
+                #if load2.load_pre.chargers_iswork[load2.load_num] == 1:
+                #    load_total.chargers_iswork[load2.load_num] == 1
+                #loads_link.append(load2)
+                print('sys_ticks = ' + str(i), load_total.chargers_iswork)
+            if i == ticks_test3:
+                num = 4
+                load_test = Loads(sys_settings, num)
+                load_test.loading(load_total, ticks_test3)#, file_input)
+               # if load_test.load_pre.chargers_iswork[load_test.load_num] == 1:
+                #    load_total.chargers_iswork[load_test.load_num] == 1
+                #loads_link.append(load_test)
+                print('sys_ticks = ' + str(i), load_total.chargers_iswork)
+            if i == ticks_test4:
+                load.loading(load_total, ticks_test4)#, file_input)
+                #if load.load_pre.chargers_iswork[load.load_num] == 1:
+               #     load_total.chargers_iswork[load.load_num] == 1
+                print('sys_ticks = ' + str(i), load_total.chargers_iswork)
+            if i == ticks_test5:
+                load.loading(load_total, ticks_test5)#, file_input)
+                #if load.load_pre.chargers_iswork[load.load_num] == 1:
+                #    load_total.chargers_iswork[load.load_num] == 1
+    
+                print('sys_ticks = ' + str(i), load_total.chargers_iswork)
+            if i == ticks_test6:
+                load8 = Loads(sys_settings, 8)
+                load8.loading(load_total, ticks_test6)#, file_input)
+                #loads_link.append(load8)
+                #if load8.load_pre.chargers_iswork[load8.load_num] == 1:
+                #    load_total.chargers_iswork[load8.load_num] == 1
+                print('sys_ticks = ' + str(i), load_total.chargers_iswork)
+                
+            if i == 120:
+                load2.loads_off(load_total, i)
+                print('sys_ticks = ' + str(i), load_total.chargers_iswork)
+                
+            ld = load_total.loads_link.head
+            while ld != 0:
+               ld.data.loads_update(load_total, i)
+               ld = ld.next
         
-        if i == ticks_test1:
-            num = 1
-            load = Loads(sys_settings, num)
-            load.loading(load_total, ticks_test1)#, file_input)
-           # if load.load_pre.chargers_iswork[load.load_num] == 1:
-           #     load_total.chargers_iswork[load.load_num] == 1
-           # loads_link.append(load)
-            print('sys_ticks = ' + str(i), load_total.chargers_iswork)
-        if i == ticks_test2:
-            num = 2
-            load2 = Loads(sys_settings, num)
-            load2.loading(load_total, ticks_test2)#, file_input)
-            #if load2.load_pre.chargers_iswork[load2.load_num] == 1:
-            #    load_total.chargers_iswork[load2.load_num] == 1
-            #loads_link.append(load2)
-            print('sys_ticks = ' + str(i), load_total.chargers_iswork)
-        if i == ticks_test3:
-            num = 4
-            load_test = Loads(sys_settings, num)
-            load_test.loading(load_total, ticks_test3)#, file_input)
-           # if load_test.load_pre.chargers_iswork[load_test.load_num] == 1:
-            #    load_total.chargers_iswork[load_test.load_num] == 1
-            #loads_link.append(load_test)
-            print('sys_ticks = ' + str(i), load_total.chargers_iswork)
-        if i == ticks_test4:
-            load.loading(load_total, ticks_test4)#, file_input)
-            #if load.load_pre.chargers_iswork[load.load_num] == 1:
-           #     load_total.chargers_iswork[load.load_num] == 1
-            print('sys_ticks = ' + str(i), load_total.chargers_iswork)
-        if i == ticks_test5:
-            load.loading(load_total, ticks_test5)#, file_input)
-            #if load.load_pre.chargers_iswork[load.load_num] == 1:
-            #    load_total.chargers_iswork[load.load_num] == 1
-
-            print('sys_ticks = ' + str(i), load_total.chargers_iswork)
-        if i == ticks_test6:
-            load8 = Loads(sys_settings, 8)
-            load8.loading(load_total, ticks_test6)#, file_input)
-            #loads_link.append(load8)
-            #if load8.load_pre.chargers_iswork[load8.load_num] == 1:
-            #    load_total.chargers_iswork[load8.load_num] == 1
-            print('sys_ticks = ' + str(i), load_total.chargers_iswork)
-        
-        
+        load_total.loads_value_update(i)
         load_total.load_t = sc.loads_calc(i, load_total.load_t,
                                      load_total.l_name, sys_settings.load_regular)
         grid0.grid_data = sc.grid_calc(i, grid0.grid_data, load_total.load_t,
                                       add1_col=grid0.l_name, add2_col=load_total.l_name,
                                       sys_s=sys_settings)
-
-        ld = load_total.loads_link.head
-        while ld != 0:
-           ld.data.loads_update(load_total, i)
-           ld = ld.next
-
-        if i == 120:
-            load2.loads_off(load_total, i)
-            print('sys_ticks = ' + str(i), load_total.chargers_iswork)
+        
         i += 1
         
     fp.draw_plot(load_total.load_t, True, figure_output='program_output/load_total.jpg',

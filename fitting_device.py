@@ -17,7 +17,11 @@ class FittingDevice():
         
         self.fitting = False
         col_list = []
-        col_list.insert(0, 'Ebxn')
+        col_list.insert(0, 'iswork')
+        col_list.insert(0, 'work_state')
+        col_list.insert(0, 'SOE') 
+        col_list.insert(0, 'Ebxn') #充为正，放为负
+        col_list.insert(0, 'load')
         col_list.insert(0, 'price_coe')
         col_list.insert(0, 'bills')
         col_list.insert(0, 'Gn') 
@@ -31,61 +35,96 @@ class FittingDevice():
         self.data = self.data.set_index(['index'])
         self.data = self.data.fillna(0)
         self.data['price_coe'] = [1] * data_lens
- 
+        self.ebx_min_cd_interval = 1
+        self.ebx_min_cd_interval_bk = self.ebx_min_cd_interval
+        self.ebx_work_state = 'rest'
+        self.load_regular = True
+        
     def input_conditon(self, **kwg):
         for x in kwg:
             if x == 'sys_s':
                 sys_s = kwg[x]
-                self.cap_limit = sys_s.cap_limit
-            if x == 'ebx':
-                ebx = kwg[x]
-                self.ebx = ebx
+                self.trans_cap_limit = sys_s.cap_limit
+            if x == 'ebx_min_cd_interval':
+                self.ebx_min_cd_interval = kwg[x]
             if x == 'price':
                 self.data['price_coe'] = kwg[x]
         
 
     def set_targe(self, targe):
+        """
+        targe:
+            day_cost当天收益最大化
+            bat_life电池寿命最优
+            normal只补充配电不足
+        """
         self.targe = targe
         
-    def charge_rate_calc(self):
+    def update_value(self, ticks, ebx):
         """
-        计算在一天电价变化的情况下，电池充放电倍率预期最大最小值
+        更新系统相关参数
         """
-        price_list = self.data['price_coe']
-        price_list = list(price_list.sort_values())
-        self.high_price = price_list[:-1]
-        self.low_price = price_list[0]
-        if self.high_price == self.low_price:
-            high_price_num = len(price_list)
-            low_price_num = high_price_num
-        else:
-            high_price_num = 1
-            low_price_num = 1
-            for i in range(len(price_list)):
-                if price_list[i+1] == price_list[i]:
-                    low_price_num += 1
-                else:
-                    break
-            for i in range(len(price_list)):
-                if price_list[0-i-1] == price_list[0-i-2]:
-                    high_price_num += 1
-                else:
-                    break
-        self.max_charge_v = float(self.ebx.cap_Nominal * self.ebx.soc_limited / low_price_num) /self.ebx.volt_Nominal
-        self.max_discharge_v = float(self.ebx.cap_Nominal * self.ebx.soc_limited / high_price_num) / self.ebx.volt_Nominal
-        if self.max_charge_v >= self.ebx.charge_rate_limited:
-            self.max_charge_v = self.ebx.charge_rate_limited
-        if self.max_discharge_v >= self.ebx.discharge_rate_limited:
-            self.max_discharge_v = self.ebx.discharge_rate_limited
-            
+        ebx.update_value(self.targe)
         
-    def day_cost_fitting(self, data, col_name):
+        self.ebx_active = ebx.active
+        self.ebx_soe = ebx.soe
+        self.ebx_charge_energy = ebx.charge_energy
+        self.ebx_discharge_energy = ebx.discharge_energy
+        self.ebx_charge_rate = ebx.charge_rate
+        self.ebx_discharge_rate = ebx.discharge_rate
+        
+        #将更新值存在work_value表中
+        self.data.loc[ticks, ['iswork']] = ebx.active
+        self.data.loc[ticks, ['SOE']] = self.ebx_soe
+        
+    def sys_fitting(self, ticks, ebx, data, col_name='L0'):
+        """
+        选择调整策略
+        """
+        load = data[:]
+        self.update_value(ticks, ebx)
+        self.loads_value = load.loc[ticks, [col_name]]
+        
+        self.ebx_min_cd_interval -= 1
+        if self.ebx_min_cd_interval > 0:
+            return
+        else:
+            self.ebx_min_cd_interval = self.self.ebx_min_cd_interval.bk
+            if self.targe == 'normal':
+                normal_fitting()
+            if self.targe == 'day_cost':
+                self.day_cost_fitting()
+            
+            
+        #将更新值存在work_value表中
+        self.data.loc[ticks, ['loads']] = self.loads_value
+        self.data.loc[ticks, ['work_state']] = self.ebx_work_state
+        if self.ebx_work_state == 'charge':
+            self.data.loc[ticks, ['C_D_rate']] = self.ebx_charge_rate
+        elif self.ebx_work_state == 'discharge':
+            self.data.loc[ticks, ['C_D_rate']] = self.ebx_discharge_rate
+        else:
+            self.data.loc[ticks, ['C_D_rate']] = 0
+        
+    def normal_fitting(self):
+        return
+        
+    def day_cost_fitting(self):
+        """
+        如果负载不允许调整，则需要优先满足负荷需要
+        """
+        if self.load_regular == False:
+            return
+        else:
+            self.day_cost_algorithm(self)
+            
+        ''' 
         l0 = data[:]
         l0 = l0[[col_name]]
         g0 = self.day_cost_algorithm(self, l0)
         self.data[self.col_list] = g0[self.col_list]
-            
-    def day_cost_algorithm(self, data):
+         '''   
+    def grid_cost(self, data):
         """
         进行计算，并将计算结果分别放入self.data的Gn，L0,En,bills中
         """
@@ -101,15 +140,15 @@ class FittingDevice():
 
         return df
         
-    def max_profit(self):
+    def day_cost_algorithm(self):
 
         pre_charge, pre_discharge, discharge = 0, 0, 0
         pre_rest, rest = 0, 0
         charge = int(-100)
         E0 = 0#初始能量
-        En = 4#额定能量
-        v_c = 1#充电速度
-        v_d = 1#放电速度
+        En = 100#额定能量
+        v_c = 5#充电速度
+        v_d = 8#放电速度
         t = 1#单位时间片
         Ecx = v_c * t#单位时间可以充入的能量
         Edx = v_d * t#单位时间可以放出的能量
@@ -125,8 +164,7 @@ class FittingDevice():
 
             c_cost = Exc * price
             d_cost = Exd * price
-            #如果本次不能充电，则将充电成本设置为放电成本
-            #如果本次不能放电，则将放电成本设置为充电成本
+
             if Exc != 0:
                 #charge = max(pre_charge, pre_rest-c_cost)
                 charge = max(pre_charge-c_cost, pre_discharge-c_cost, pre_rest-c_cost)
@@ -135,15 +173,9 @@ class FittingDevice():
                 discharge = max(pre_charge+d_cost, pre_discharge+d_cost)#weishenmbunengjia!!!
             print('Exc='+str(Exc) + ' Exd='+str(Exd)+
                   ' c_cost='+str(c_cost)+ ' d_cost='+str(d_cost))   
-            
-            
-            
+      
             rest = max(pre_charge, pre_discharge)
-            """
-            charge = max(pre_charge-c_cost, pre_discharge-c_cost, pre_rest-c_cost)
-            discharge = max(pre_charge+d_cost, pre_discharge+d_cost, pre_rest+d_cost)
-            rest = max(pre_charge, pre_discharge, pre_rest)
-            """
+
             #判断第i次可以充或放的能量，如果本次单价高但能量成本不足以达到上一次购入能量的成本，同样不放
             if discharge > pre_discharge:
                 if Exd == 0:
@@ -185,20 +217,23 @@ class FittingDevice():
 
 def main():
     from energy_box import Energybox
+    from ess_settings import Settings
     
-    ebox = Energybox(250)
+    sys_settings = Settings()
     df = FittingDevice(100)
     df0 = pd.read_excel('data/model1.xls', index_col=0)
     df0 = df0.fillna(0)
     p = df0['price_coe']
     l = df0['L0']
-    df.input_conditon(price=p, ebx=ebox)
+    ebox = Energybox(sys_settings, p)
+    df.input_conditon(price=p, ebx_min_cd_interval=2)
     df.set_targe('day_cost')
-    df.day_cost_algorithm(l)
+    df.grid_cost(l)
     print(df.data)
+    df.sys_fitting(3, ebox, df0)
    # print(df.ebx , df.targe, '\n')
-    c = df.max_profit()
-    df.charge_rate_calc()
+    #c = df.day_cost_algorithm()
+   # df.fitting(3, ebox, df0)
 
 if __name__ == '__main__':
     main()
