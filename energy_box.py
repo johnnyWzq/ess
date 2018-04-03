@@ -28,7 +28,7 @@ class Energybox():
         self.soc_limited_max = 1
         
         self.sample_interval = sample_interval
-        self.min_cd_interval = int(self.sample_interval / 10) #一次充／放电时间至少1分钟
+        self.min_cd_interval = int(sample_interval / 10) #一次充／放电时间至少1分钟
         
         self.input_mode = input_mode
         
@@ -58,7 +58,6 @@ class Energybox():
         """
         self.active = enable
         
-        self.updata_cd_rate(targe)#当前给定充放电倍率
         #更新单位时间能量流动值,按额定电压电流计算
         self.charge_energy = self.charge_rate * self.volt_nominal * self.ah_nominal / 1000
         self.discharge_energy = self.discharge_rate * self.volt_nominal * self.ah_nominal / 1000
@@ -74,14 +73,7 @@ class Energybox():
                 #更新单位时间能量流动值
                 self.charge_energy = self.charge_rate * kwg[x][4] * kwg[x][5] / 1000
                 self.discharge_energy = self.discharge_rate * kwg[x][4] * kwg[x][5] / 1000
-                
-    def updata_cd_rate(self, targe):
-        """
-        暂时不做调节
-        """
-        if targe == 'day_cost':
-            self.charge_rate = self.max_charge_rate
-            self.discharge_rate = self.max_discharge_rate
+
             
     def charge_rate_calc(self, price):
         """
@@ -89,7 +81,7 @@ class Energybox():
         """
         price_list = price
         price_list = list(price_list.sort_values())
-        self.high_price = price_list[:-1]
+        self.high_price = price_list[-1]
         self.low_price = price_list[0]
         if self.high_price == self.low_price:
             high_price_num = len(price_list)
@@ -119,10 +111,9 @@ class Energybox():
 test
 """
 def main():
-    from ess_settings import Settings
+
     import pandas as pd
-    
-    sys_settings = Settings()    
+      
     v = [1,2,3,4,5,6]
     p = pd.Series([7,8,9,0,1])
     ebx = Energybox(2, p, input_mode='out')

@@ -16,16 +16,10 @@ class FittingDevice():
     def __init__(self, data_lens):
         
         self.fitting = False
-        col_list = []
-        col_list.insert(0, 'iswork')
-        col_list.insert(0, 'work_state')
-        col_list.insert(0, 'SOE') 
-        col_list.insert(0, 'Ebxn') #充为正，放为负
-        col_list.insert(0, 'load')
-        col_list.insert(0, 'price_coe')
-        col_list.insert(0, 'bills')
-        col_list.insert(0, 'Gn') 
-   #     col_list.insert(0, 'time')#增加时间列
+        col_list = ['Gn', 'bills', 'price_coe', 'load', 'iswork', 
+                    'SOE', 'delta_energy', 'work_state', 'rate']
+        #delta_energy充为正，放为负
+        #col_list.insert(0, 'time')#增加时间列
         self.data = pd.DataFrame(columns = col_list) #创建代表拟合器输出的dataframe 
         self.col_list = col_list
         self.g_name = col_list[0]
@@ -64,8 +58,8 @@ class FittingDevice():
         """
         更新系统相关参数
         """
-        ebx.update_value(self.targe)
-        
+        ebx.update_value(self.targe) #ebx更新当前值
+           
         self.ebx_active = ebx.active
         self.ebx_soe = ebx.soe
         self.ebx_charge_energy = ebx.charge_energy
@@ -73,10 +67,19 @@ class FittingDevice():
         self.ebx_charge_rate = ebx.charge_rate
         self.ebx_discharge_rate = ebx.discharge_rate
         
+        self.update_cd_rate(ebx.max_charge_rate, ebx.max_discharge_rate)#更新充放电倍率     
         #将更新值存在work_value表中
         self.data.loc[ticks, ['iswork']] = ebx.active
         self.data.loc[ticks, ['SOE']] = self.ebx_soe
-        
+                    
+    def update_cd_rate(self, c_rate, d_rate):
+        """
+        暂时不做调节
+        """
+        if self.targe == 'day_cost':
+            self.charge_rate = c_rate
+            self.discharge_rate = d_rate
+            
     def sys_fitting(self, ticks, ebx, data, col_name='L0'):
         """
         选择调整策略
@@ -217,15 +220,13 @@ class FittingDevice():
 
 def main():
     from energy_box import Energybox
-    from ess_settings import Settings
-    
-    sys_settings = Settings()
+
     df = FittingDevice(100)
     df0 = pd.read_excel('data/model1.xls', index_col=0)
     df0 = df0.fillna(0)
     p = df0['price_coe']
     l = df0['L0']
-    ebox = Energybox(sys_settings, p)
+    ebox = Energybox(10, p)
     df.input_conditon(price=p, ebx_min_cd_interval=2)
     df.set_targe('day_cost')
     df.grid_cost(l)
