@@ -14,7 +14,7 @@ class Energybox():
         初始化
         '''
         self.bat_type = 'LiFePO4'
-        self.cap_nominal  = 130
+        self.cap_nominal  = 800
         self.volt_nominal  = 720
         self.ah_nominal  = 180
         self.charge_rate_standerd = 0.5

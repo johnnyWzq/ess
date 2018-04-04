@@ -55,7 +55,7 @@ class FittingDevice():
         
         self.delta_load = 0 #正为减负载，负为加负载
         self.load_regular_enable = True #允许调节负载
-        self.lte = True #允许负载放电
+        self.lte = False #允许负载放电
         
         #初始化各操作带来的收益
         self.profit = {'pre_charge':0, 'pre_discharge':0, 'pre_rest':0,
@@ -126,18 +126,21 @@ class FittingDevice():
                 self.delta_load = 0
             else:               
                 #在变压器不满足当前整个负荷要求时
-                self.delta_load = self.load_origin - self.trans_cap - self.ebx_charge_energy_allow_bk
+                if self.load_regular_enable == True:
+                    self.delta_load = self.load_origin - self.trans_cap + self.ebx_charge_energy_allow_bk
+                else:
+                    self.delta_load = 0
                 self.load_regular = self.load_origin - self.delta_load
                 self.grid_value = self.load_regular - self.ebx_charge_energy_allow_bk
+                    
         elif self.ebx_work_state[0] == 'discharge':
                 #放电情况下负载需要调整值
-                if self.load_regular_enable == True:
-                    if self.trans_cap < (self.load_origin-self.ebx_discharge_energy_allow_bk):
-                        self.delta_load = self.load_origin - self.ebx_discharge_energy_allow_bk - self.trans_cap
-                    else:
-                        self.grid_value = self.load_origin - self.ebx_discharge_energy_allow_bk
-                        self.load_regular = self.load_origin
-                        self.delta_load = 0
+                if self.trans_cap < (self.load_origin-self.ebx_discharge_energy_allow_bk):
+                    self.delta_load = self.load_origin - self.ebx_discharge_energy_allow_bk - self.trans_cap
+                else:
+                    self.grid_value = self.load_origin - self.ebx_discharge_energy_allow_bk
+                    self.load_regular = self.load_origin
+                    self.delta_load = 0
         else:
             self.grid_value = self.load_origin
             self.load_regular = self.load_origin
@@ -305,72 +308,6 @@ class FittingDevice():
                                                self.ebx_soe_max-self.ebx_soe)
             self.ebx_discharge_energy_allow = min(self.ebx_discharge_energy,
                                               self.ebx_soe-self.ebx_soe_min)
-       
-    def max_profit_test(self):
-        
-        E0 = 0#初始能量
-        En = 100#额定能量
-        v_c = 5#充电速度
-        v_d = 8#放电速度
-        t = 1#单位时间片
-        Ecx = v_c * t#单位时间可以充入的能量
-        Edx = v_d * t#单位时间可以放出的能量
-        Es = E0#剩余能量
-        Exd = min(Edx, Es)#单位时间允许放出的能量
-        Exc = min(Ecx, En-E0)#单位时间允许充入的能量
-        act = []
-        i = 0
-        pre_discharge, discharge, pre_rest, rest, pre_charge = 0,0,0,0,0
-        charge = -100
-        for price in self.data['price_coe']:      
-            pre_charge = charge
-            pre_rest = rest
-            pre_discharge = discharge
-
-            c_cost = Exc * price
-            d_cost = Exd * price
-
-            if Exc != 0:
-                #charge = max(pre_charge, pre_rest-c_cost)
-                charge = max(pre_charge-c_cost, pre_discharge-c_cost, pre_rest-c_cost)
-            if Exd != 0:
-                #discharge = max(pre_charge+d_cost, pre_discharge)
-                discharge = max(pre_charge+d_cost, pre_discharge+d_cost)#weishenmbunengjia!!!
-            print('Exc='+str(Exc) + ' Exd='+str(Exd)+
-                  ' c_cost='+str(c_cost)+ ' d_cost='+str(d_cost))   
-      
-            rest = max(pre_charge, pre_discharge)
-
-            #判断第i次可以充或放的能量，如果本次单价高但能量成本不足以达到上一次购入能量的成本，同样不放
-            if discharge > pre_discharge:
-                if Exd == 0:
-                    act.append('rest')
-                else:
-                    act.append('discharge')
-                Es = Es - Exd
-                Exd = min(Edx, Es)
-                Exc = min(Ecx, En-Es)
-                charge = discharge
-            elif charge > pre_charge:
-                if Exc == 0:
-                    act.append('rest')
-                else:
-                    act.append('charge')
-                Es = Es + Exc
-                Exc = min(Ecx, En-Es)
-                Exd = min(Edx, Es)
-                discharge = charge #修正下一次pre_discharge
-
-            else:
-                act.append('rest')
-
-            i += 1
-            print(price, charge, discharge, rest)
-            print(act)
-            print('Es='+str(Es) + '\n')
-            
-        print(discharge)
-        return discharge
     
     def cd_rate_regular(self):
         """
