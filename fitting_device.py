@@ -236,7 +236,8 @@ class FittingDevice():
         print(self.data.loc[ticks, ['work_state']])
         print('Es='+str(self.ebx_soe) + '\n')
 
-        '''
+    def max_profit_test(self):
+        
         E0 = 0#初始能量
         En = 100#额定能量
         v_c = 5#充电速度
@@ -249,9 +250,8 @@ class FittingDevice():
         Exc = min(Ecx, En-E0)#单位时间允许充入的能量
         act = []
         i = 0
-   '''     
-        
-        '''
+        pre_discharge, discharge, pre_rest, rest, pre_charge = 0,0,0,0,0
+        charge = -100
         for price in self.data['price_coe']:      
             pre_charge = charge
             pre_rest = rest
@@ -301,7 +301,7 @@ class FittingDevice():
             
         print(discharge)
         return discharge
-    '''
+    
     def cd_rate_regular(self):
         """
         调节充放电倍率
