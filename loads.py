@@ -116,7 +116,7 @@ def main():
     file_input = 'data_temp/charging_data1.csv'  
     sys_settings = Settings() 
     
-    ticks_max = sys_settings.sample_interval * 12 #24h
+    ticks_max = sys_settings.sample_interval * 2 #24h
     
     grid0 = Grid(ticks_max) #创建电网侧负荷对象，仅考虑配电参数限制
 
@@ -124,7 +124,7 @@ def main():
     
     ebox = Energybox(sys_settings.sample_interval)
     
-    fitting = FittingDevice(ebox, grid0.grid_data['price_coe'], 100, ticks_max)
+    fitting = FittingDevice(ebox, grid0)
     fitting.set_targe('day_cost')
     
     print("sys_ticks init:"+str(load_total.chargers_iswork))
@@ -194,7 +194,7 @@ def main():
         load_total.loads_value_update(i)
         load_total.load_t = sc.loads_calc(i, load_total.load_t,
                                      load_total.l_name, sys_settings.load_regular)
-        grid0.grid_data = sc.grid_calc(i, grid0.grid_data, load_total.load_t,
+        grid0.grid_data = sc.grid_calc(i, grid0, load_total.load_t,
                                       add1_col=grid0.l_name, add2_col=load_total.l_name,
                                       sys_s=sys_settings)
         fitting.sys_fitting(i, ebox, load_total.load_t)

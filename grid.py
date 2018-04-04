@@ -26,7 +26,11 @@ class Grid():
         self.load_ticks_max = data_lens
         self.grid_data = self.grid_data.fillna(0)
         self.grid_data['price_coe'] = [1] * data_lens
-           
+        #变压器设置
+        self.trans_cap = 300 #kw
+        self.trans_rate = 0.8
+        self.cap_limit = self.trans_cap * self.trans_rate       
+        self.xtg = True #是否允许电网回馈
         #时间序列按采样周期赋值
         if data_lens <= 87600: #最高采样周期3600/h
             dlt = float(86400/data_lens)
@@ -48,8 +52,14 @@ class Grid():
             if c == 'price_coe':
                 self.get_power_bills_data()
         
-    def get_power_bills_data(self, **kwg):
-        self.grid_data['price_coe'] = [1] * self.data_lens
+    def get_power_price_data(self, **kwg):
+        """
+        外部读取电价数据，暂时要求表对index与系统一致
+        """
+        for x in kwg:
+            if x == 'price':
+                price = kwg[x]
+        self.grid_data['price_coe'] = price
         
     def draw(self):
         fp.draw_plot(self.grid_data, figure_output='program_output/gird.jpg',

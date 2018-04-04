@@ -43,8 +43,9 @@ class Energybox():
         self.charge_rate = self.charge_rate_standerd
         self.discharge_rate = self.discharge_rate_standerd
         self.soe = self.cap_nominal
-        self.soe_min = self.soe * self.soc_limited_min
-        self.soe_max = self.soe * self.soc_limited_max
+        self.soe_min = self.cap_nominal * self.soc_limited_min
+        self.soe_max = self.cap_nominal * self.soc_limited_max
+        self.soe_nominal = self.cap_nominal * 0.5
         
         #self.charge_rate_calc(price)
 

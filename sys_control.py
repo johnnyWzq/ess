@@ -25,7 +25,7 @@ def loads_calc(sys_ticks, load_pre_data, l_name, load_regular, input_mode='in'):
         data = load_pre_data
     return data
 
-def grid_calc(sys_ticks, grid_data, load_data, **kwg):
+def grid_calc(sys_ticks, grid, load_data, **kwg):
     '''
     计算当前时刻值行的电网侧输出功率值，并计算截止到当前时刻合计的电费
     使用方式：按指定的频率循环调用
@@ -37,10 +37,10 @@ def grid_calc(sys_ticks, grid_data, load_data, **kwg):
             add1_col = kwg[x] #被计算量，当前代表电网功率的grid
         if x == 'add2_col':
             add2_col = kwg[x]
-        if x == 'sys_s':
-            sys_settings = kwg[x]
+
+    grid_data = grid.grid_data[:]
     grid_data = dp.dfs_col_add(sys_ticks, grid_data, load_data, add1_col, add2_col)
-    grid_data = grid_limit(sys_ticks, grid_data, limit_col=add1_col, sys_s=sys_settings)
+    grid_data = grid_limit(sys_ticks, grid_data, limit_col=add1_col, grid_cap=grid.cap_limit)
     return grid_data
 
 def grid_limit(sys_ticks, grid_data, **kwg):
@@ -48,9 +48,8 @@ def grid_limit(sys_ticks, grid_data, **kwg):
     考虑配电侧参数限制，在根据负载计算出来的grid_data基础上进行处理
     """
     for x in kwg:
-        if x == 'sys_s':
-            sys_s = kwg[x]
-            grid_cap = sys_s.cap_limit
+        if x == 'grid_cap':
+            grid_cap = kwg[x]
         if x == 'limit_col':
             limit_col = kwg[x]
     return (dp.dfs_unit_limit(sys_ticks, grid_data, limit_col, grid_cap))

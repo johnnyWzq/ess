@@ -13,10 +13,7 @@ class Settings():
     
     def __init__(self):
         '''初始化'''
-        #变压器设置
-        self.trans_cap = 2 #kw
-        self.trans_rate = 0.8
-        self.cap_limit = self.trans_cap * self.trans_rate
+        
         #选择哪个参数计算
         self.calc_para = 'power'
         #充电桩设置
