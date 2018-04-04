@@ -71,6 +71,7 @@ df4.loc[1, ['p4']] = df4.loc[1, ['p4']] - 3
 e= df4.loc[1, ['p4']]
 f = df4.iloc[[1,2],[2]]
 g = df4.iat[1,3]
+o = df4.loc[1:2, ['p4']]
 j = 0
 
 df4 =  df4[['p4']]

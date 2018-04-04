@@ -151,6 +151,8 @@ class FittingDevice():
         self.data.loc[ticks, ['load_origin']] = self.load_origin
         self.data.loc[ticks, ['load_regular']] = self.load_regular
         self.data.loc[ticks, ['delta_load']] = self.delta_load
+        self.data.loc[ticks, ['bills']] = self.grid_value * self.price[0]
+        self.grid_cost_t = self.grid_value * self.price[0]
         self.ebx_work_state = self.data.loc[ticks, ['work_state']]
         if self.ebx_work_state[0] == 'charge':
             self.data.loc[ticks, ['rate']] = self.ebx_charge_rate
@@ -173,6 +175,7 @@ class FittingDevice():
         self.load_origin = self.load_origin[0]
         self.load_regular = self.load_origin
         self.grid_value = self.load_origin
+        self.price = self.data.loc[ticks, ['price_coe']]
         self.update_ess_value(ticks, ebx)
 
         self.ebx_min_cd_interval -= 1
@@ -180,6 +183,11 @@ class FittingDevice():
             return
         else:#到了ebx可以调整的时刻
             self.ebx_min_cd_interval = self.ebx_min_cd_interval_bk
+            #更新时间片内对值
+            start = ticks + 1 - self.ebx_min_cd_interval
+            end = ticks - 1
+            if start > 0:
+                self.data.loc[start:end, ['bills']] = self.grid_cost_t
             #如果使能了day_cost模式
             if self.targe == 'day_cost':
                 self.day_cost_algorithm(ticks)
@@ -208,22 +216,6 @@ class FittingDevice():
         else:
             self.data.loc[ticks, ['work_state']] = 'rest'
             self.next_energy_calc('rest')
-         
-    def grid_cost(self, data):
-        """
-        进行计算，并将计算结果分别放入self.data的Gn，L0,En,bills中
-        """
-        df = dp.data_merge(self.data, data) #将表合并到df中
-        #计算L0和*price, 先计算能量，对l0积分，然后在乘以price，因为price是系数，
-       # 经过公式变化L0和*price等效于L0*price
-
-        cost0 = 0
-        c = df['L0'] * df['price_coe']
-        for i in c:
-            cost0 += i
-        print('the original cost is :' + str(cost0))
-
-        return df
         
     def day_cost_algorithm(self, ticks):
         """
@@ -340,8 +332,7 @@ class FittingDevice():
                     break
           #根据最低最高时段可以最大程度充放能量推荐的倍率      
         self.rd_charge_rate = float((self.ebx_soe_max - self.ebx_soe_min) / low_price_num) / self.ebx_volt / self.ebx_cur_charge * 1000
-        self.rd_discharge_rate = float((self.ebx_soe_max - self.ebx_soe_min) / high_price_num) / self.ebx_volt / self.ebx_cur_charge * 1000
-
+        self.rd_discharge_rate = float((self.ebx_soe_max - self.ebx_soe_min) / high_price_num) / self.ebx_volt / self.ebx_cur_charge * 1000         
 
     def draw(self, **kwg):
         fp.draw_plot(self.data, figure_output='program_output/gird.jpg',
@@ -364,8 +355,6 @@ def main():
 
 
     df.set_targe('day_cost')
-    df.grid_cost(l)
-    print(df.data)
     for i in range(100):
        df.sys_fitting(i, ebox, df0)
     print(df.data)
