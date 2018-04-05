@@ -54,11 +54,6 @@ def grid_limit(sys_ticks, grid_data, **kwg):
             limit_col = kwg[x]
     return (dp.dfs_unit_limit(sys_ticks, grid_data, limit_col, grid_cap))
 
-def day_cost_algorithm(data1, data2):
-    """
-    进行计算，并将计算结果分别放入data1，data2的第一列
-    """
-
 '''test'''
 
 

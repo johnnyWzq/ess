@@ -53,7 +53,7 @@ def read_load_file(load_type, data_file='data/loads_model.xls', rows_num=65535):
 
     return data
 
-def write_load_file(data, data_file='data_load/loads.csv'):
+def write_file(data, data_file='data_load/loads.csv'):
     
     file_type = data_file[-4:]
     try:

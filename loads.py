@@ -119,12 +119,14 @@ def main():
     ticks_max = sys_settings.sample_interval * 2 #24h
     
     grid0 = Grid(ticks_max) #创建电网侧负荷对象，仅考虑配电参数限制
+    
+    grid0.get_power_price_data(fp.read_load_file(0,'data/price.xls'))
 
     load_total = Loadtotal(ticks_max, sys_settings.chargers_num) #创建代表总负载的dataframe
     
     ebox = Energybox(sys_settings.sample_interval)
     
-    fitting = FittingDevice(ebox, grid0)
+    fitting = FittingDevice(ebox, grid0, ticks_max)
     fitting.set_targe('day_cost')
     
     print("sys_ticks init:"+str(load_total.chargers_iswork))
@@ -194,17 +196,22 @@ def main():
         load_total.loads_value_update(i)
         load_total.load_t = sc.loads_calc(i, load_total.load_t,
                                      load_total.l_name, sys_settings.load_regular)
+        """
         grid0.grid_data = sc.grid_calc(i, grid0, load_total.load_t,
                                       add1_col=grid0.l_name, add2_col=load_total.l_name,
                                       sys_s=sys_settings)
-        fitting.sys_fitting(i, ebox, load_total.load_t)
+        """
+        load_t = load_total.load_t.loc[i, [load_total.l_name]]
+        load_t = load_t[0]
+        fitting.sys_fitting(i, ebox, load_t)
         i += 1
         
     fp.draw_plot(load_total.load_t, True, figure_output='program_output/load_total.jpg',
                      y_axis=load_total.l_name)#, x_axis='time')
-    fp.write_load_file(load_total.load_t, 'program_output/load_total.csv')
+    fp.write_file(load_total.load_t, 'program_output/load_total.csv')
+    fp.write_file(fitting.data, 'program_output/outputdata.xls')
 
-    grid0.draw()
+    #grid0.draw()
     
 if __name__ == '__main__':
     main()

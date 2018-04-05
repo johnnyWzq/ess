@@ -14,7 +14,7 @@ class Energybox():
         初始化
         '''
         self.bat_type = 'LiFePO4'
-        self.cap_nominal  = 800
+        self.cap_nominal  = 130
         self.volt_nominal  = 720
         self.ah_nominal  = 180
         self.charge_rate_standerd = 0.5
@@ -26,9 +26,9 @@ class Energybox():
         self.circle = 3000
         self.soc_limited_min = 0.2
         self.soc_limited_max = 1
-        
-        self.sample_interval = sample_interval
-        self.min_cd_interval = int(sample_interval / 10) #一次充／放电时间至少1分钟
+        self.min_cd_interval_ticks = 60 #一次充／放电ticks间隔设置
+        self.sample_interval = sample_interval #1小时采用频率
+        self.min_cd_interval = int(sample_interval / self.min_cd_interval_ticks) #一次充／放电时间至少1分钟
         
         self.input_mode = input_mode
         
@@ -80,7 +80,7 @@ def main():
       
     v = [1,2,3,4,5,6]
     p = pd.Series([7,8,9,0,1])
-    ebx = Energybox(2, input_mode='out')
+    ebx = Energybox(360, input_mode='out')
     ebx.update_value('day_cost', ess_value=v)
     print(ebx.charge_rate)
     

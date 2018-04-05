@@ -13,12 +13,12 @@ import sys_control as sc
 
 class FittingDevice():
     
-    def __init__(self, ebx, grid):
+    def __init__(self, ebx, grid, data_lens):
         
         self.fitting = False
-        col_list = ['Gn', 'load_origin', 'load_regular', 'delta_load', 
-                    'bills', 'iswork', 
-                    'SOE', 'delta_energy', 'work_state', 'rate', 'price_coe']
+        col_list = ['Gn', 'load_origin', 'delta_load', 'load_regular',
+                    'fit_power', 'work_state', 'rate', 'iswork', 
+                     'SOE',  'delta_energy', 'bills', 'price_coe']
         #delta_energy充为正，放为负
         #load_origin为原始负载，load_regular为需要调整对负载，变化代表要对负载进行调节
         #col_list.insert(0, 'time')#增加时间列
@@ -26,7 +26,7 @@ class FittingDevice():
         self.col_list = col_list
         self.g_name = col_list[0]
         self.e_name = col_list[3]
-        self.load_ticks_max = len(grid.grid_data)
+        self.load_ticks_max = data_lens
         self.data['index'] = range(self.load_ticks_max)
         self.data = self.data.set_index(['index'])
         self.data = self.data.fillna(0)
@@ -35,6 +35,7 @@ class FittingDevice():
         self.ebx_soe = ebx.soe
         self.ebx_soe_max = ebx.soe_max
         self.ebx_soe_min = ebx.soe_min
+        self.ebx_cap = ebx.cap_nominal
         self.ebx_charge_rate = ebx.charge_rate
         self.ebx_discharge_rate = ebx.discharge_rate
         self.ebx_work_state = ebx.work_state
@@ -85,8 +86,8 @@ class FittingDevice():
         self.ebx_cur_charge = self.ebx_cur * self.ebx_charge_rate
         self.ebx_cur_discharge = self.ebx_cur * self.ebx_discharge_rate
          #更新单位时间能量流动值
-        self.ebx_charge_energy = self.ebx_min_cd_interval * self.ebx_volt * self.ebx_cur_charge / 1000#单位时间可以充入的能量
-        self.ebx_discharge_energy = self.ebx_min_cd_interval * self.ebx_volt * self.ebx_cur_discharge / 1000#单位时间可以放出的能量
+        self.ebx_charge_energy = self.ebx_cap * self.ebx_charge_rate / self.ebx_min_cd_interval_bk#单位时间可以充入的能量
+        self.ebx_discharge_energy = self.ebx_cap *self.ebx_discharge_rate / self.ebx_min_cd_interval_bk#单位时间可以放出的能量
         ebx.update_value(self.targe) #ebx更新当前值
         self.ebx_soe_nominal = ebx.soe_nominal
         self.ebx_input_mode = ebx.input_mode
@@ -118,29 +119,32 @@ class FittingDevice():
             self.ebx_discharge_rate = self.ebx_discharge_rate_limited
             
     def update_value(self, ticks):
-        self.ebx_work_state = self.data.loc[ticks, ['work_state']]
-        if self.ebx_work_state[0] == 'charge':       
-            if self.trans_cap > (self.load_origin+self.ebx_charge_energy_allow_bk):
-                self.grid_value = self.load_origin+self.ebx_charge_energy_allow_bk
+        self.ebx_work_state = self.data.loc[ticks, ['work_state']]     
+        if self.ebx_work_state[0] == 'charge':
+            #需要将能量转换为功率，即除以min_cd_interval
+            self.ebx_charge_power = self.ebx_charge_energy_allow_bk / self.ebx_min_cd_interval_bk
+            if self.trans_cap > (self.load_origin+self.ebx_charge_power):
+                self.grid_value = self.load_origin+self.ebx_charge_power
                 self.load_regular = self.load_origin
                 self.delta_load = 0
             else:               
                 #在变压器不满足当前整个负荷要求时
                 if self.load_regular_enable == True:
-                    self.delta_load = self.load_origin - self.trans_cap + self.ebx_charge_energy_allow_bk
+                    self.delta_load = self.load_origin - self.trans_cap + self.ebx_charge_power
                 else:
                     self.delta_load = 0
                 self.load_regular = self.load_origin - self.delta_load
-                self.grid_value = self.load_regular - self.ebx_charge_energy_allow_bk
+                self.grid_value = self.load_regular - self.ebx_charge_power
                     
         elif self.ebx_work_state[0] == 'discharge':
-                #放电情况下负载需要调整值
-                if self.trans_cap < (self.load_origin-self.ebx_discharge_energy_allow_bk):
-                    self.delta_load = self.load_origin - self.ebx_discharge_energy_allow_bk - self.trans_cap
-                else:
-                    self.grid_value = self.load_origin - self.ebx_discharge_energy_allow_bk
-                    self.load_regular = self.load_origin
-                    self.delta_load = 0
+            self.ebx_discharge_power = self.ebx_discharge_energy_allow_bk / self.ebx_min_cd_interval_bk
+            #放电情况下负载需要调整值
+            if self.trans_cap < (self.load_origin-self.ebx_discharge_power):
+                self.delta_load = self.load_origin - self.ebx_discharge_power - self.trans_cap
+            else:
+                self.grid_value = self.load_origin - self.ebx_discharge_power
+                self.load_regular = self.load_origin
+                self.delta_load = 0
         else:
             self.grid_value = self.load_origin
             self.load_regular = self.load_origin
@@ -151,14 +155,16 @@ class FittingDevice():
         self.data.loc[ticks, ['load_origin']] = self.load_origin
         self.data.loc[ticks, ['load_regular']] = self.load_regular
         self.data.loc[ticks, ['delta_load']] = self.delta_load
-        self.data.loc[ticks, ['bills']] = self.grid_value * self.price[0]
-        self.grid_cost_t = self.grid_value * self.price[0]
+        self.data.loc[ticks, ['bills']] = self.grid_value * self.price
+        self.grid_cost_t = self.grid_value * self.price
         self.ebx_work_state = self.data.loc[ticks, ['work_state']]
         if self.ebx_work_state[0] == 'charge':
             self.data.loc[ticks, ['rate']] = self.ebx_charge_rate
+            self.data.loc[ticks, ['fit_power']] = self.ebx_charge_power
             self.data.loc[ticks, ['delta_energy']] = self.ebx_charge_energy_allow_bk
         elif self.ebx_work_state[0] == 'discharge':
             self.data.loc[ticks, ['rate']] = self.ebx_discharge_rate
+            self.data.loc[ticks, ['fit_power']] = self.ebx_discharge_power
             self.data.loc[ticks, ['delta_energy']] = self.ebx_discharge_energy_allow_bk
         else:
             self.data.loc[ticks, ['rate']] = 0
@@ -166,16 +172,17 @@ class FittingDevice():
             self.data.loc[ticks, ['iswork']] = self.ebx_active
             self.data.loc[ticks, ['SOE']] = self.ebx_soe
             
-    def sys_fitting(self, ticks, ebx, data, col_name='L0'):
+    def sys_fitting(self, ticks, ebx, load_value):
         """
         选择调整策略
         """
-        load = data[:]
-        self.load_origin = load.loc[ticks, [col_name]]#更新负载值
-        self.load_origin = self.load_origin[0]
+        #load = data[:]
+        self.load_origin = load_value#load.loc[ticks, [col_name]]#更新负载值
+        #self.load_origin = self.load_origin[0]
         self.load_regular = self.load_origin
         self.grid_value = self.load_origin
         self.price = self.data.loc[ticks, ['price_coe']]
+        self.price = self.price[0]
         self.update_ess_value(ticks, ebx)
 
         self.ebx_min_cd_interval -= 1
@@ -184,10 +191,10 @@ class FittingDevice():
         else:#到了ebx可以调整的时刻
             self.ebx_min_cd_interval = self.ebx_min_cd_interval_bk
             #更新时间片内对值
-            start = ticks + 1 - self.ebx_min_cd_interval
-            end = ticks - 1
-            if start > 0:
-                self.data.loc[start:end, ['bills']] = self.grid_cost_t
+            #start = ticks + 1 - self.ebx_min_cd_interval
+            #end = ticks - 1
+            #if self.grid_cost_t != None:
+             #   self.data.loc[start:end, ['bills']] = self.grid_cost_t
             #如果使能了day_cost模式
             if self.targe == 'day_cost':
                 self.day_cost_algorithm(ticks)
@@ -263,7 +270,7 @@ class FittingDevice():
 
         else:
             self.data.loc[ticks, ['work_state']] = 'rest'
-
+            self.next_energy_calc('rest')
 
     def now_energy_calc(self):
         
@@ -300,7 +307,13 @@ class FittingDevice():
                                                self.ebx_soe_max-self.ebx_soe)
             self.ebx_discharge_energy_allow = min(self.ebx_discharge_energy,
                                               self.ebx_soe-self.ebx_soe_min)
-    
+        elif work_state == 'rest':
+            self.ebx_charge_energy_allow_bk = self.ebx_charge_energy_allow
+            self.ebx_charge_energy_allow = min(self.ebx_charge_energy,
+                                               self.ebx_soe_max-self.ebx_soe)
+            self.ebx_discharge_energy_allow = min(self.ebx_discharge_energy,
+                                              self.ebx_soe-self.ebx_soe_min)
+            
     def cd_rate_regular(self):
         """
         调节充放电倍率
@@ -349,14 +362,16 @@ def main():
     df0 = df0.fillna(0)
     l = df0['L0']
     g = Grid(len(l))
-    g.get_power_price_data(price=df0['price_coe'])
-    ebox = Energybox(21)
-    df = FittingDevice(ebox, g)
+    p = fp.read_load_file(0,'data/price.xls')
+    g.get_power_price_data(p)
+    ebox = Energybox(360)
+    df = FittingDevice(ebox, g, len(l))
 
 
     df.set_targe('day_cost')
     for i in range(100):
-       df.sys_fitting(i, ebox, df0)
+        load = l[i]
+        df.sys_fitting(i, ebox, load)
     print(df.data)
 
    # print(df.ebx , df.targe, '\n')
