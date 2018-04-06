@@ -123,6 +123,7 @@ def draw_power_plot(ticks, is_save=False, figure_output='data_load/loads.jpg', *
             plt.plot(ticks, y_cap, '--', linewidth=2, label='配电容量')
         if x == 'load':
             load = kwg[x]
+            
             plt.plot(ticks, load, label='负载功率')
     plt.rcParams['font.sans-serif'] = ['SimHei'] #用来正常显示中文标签
     plt.rcParams['axes.unicode_minus'] = False #用来正常显示负号

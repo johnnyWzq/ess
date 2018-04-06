@@ -223,7 +223,7 @@ def main():
                        cap=grid0.cap_limit)
     fp.write_file(load_total.load_t, 'program_output/load_total.csv')
     fp.write_file(fitting.data, 'program_output/outputdata.xls')
-
+    print(sum(fitting.data['bills']))
     #grid0.draw()
     
 if __name__ == '__main__':

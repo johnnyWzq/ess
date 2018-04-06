@@ -77,16 +77,20 @@ class Grid():
                     break
             i += 1 
         i = 0
+        self.price_list = []
         lens = len(index_list) - 1    
         for price in price_data['price']:
             if i >= lens:
                 self.grid_data.loc[index_list[i]:, ['price_coe']] = price
                 break
-            self.grid_data.loc[index_list[i]:index_list[i+1], ['price_coe']] = price 
+            self.grid_data.loc[index_list[i]:index_list[i+1], ['price_coe']] = price
+            self.price_list.append(price)
             i += 1
         price = self.grid_data.loc[len(self.grid_data)-1, ['price_coe']]
         self.grid_data.loc[0:index_list[0], ['price_coe']] = price[0]
-        #self.grid_data['price_coe'] = prices
+       
+        self.price_list = list(set(self.price_list))
+        self.price_list.sort(reverse=True)
         
     def draw(self):
         fp.draw_plot(self.grid_data, figure_output='program_output/gird.jpg',
@@ -99,6 +103,6 @@ def main():
     p = fp.read_load_file(0,'data/price.xls')
     df = Grid(100, price = p, cap=1000, volt=380, phase=3)
     print(df.grid_data, df.cap_nominal, df.phase, df.volt_nominal)
-
+    print(df.price_list)
 if __name__ == '__main__':
     main()
