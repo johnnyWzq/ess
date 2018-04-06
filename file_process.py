@@ -4,7 +4,7 @@ Created on Wed Mar 28 10:44:46 2018
 
 @author: wuzhiqiang
 """
-
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
@@ -113,6 +113,27 @@ def draw_plot(data, is_save=False, figure_output='data_load/loads.jpg', **col):
         plt.savefig(figure_output, dpi=128)
     plt.show()
     
+def draw_power_plot(ticks, is_save=False, figure_output='data_load/loads.jpg', **kwg):
+
+    x_axis = ticks
+    for x in kwg:
+        if x == 'cap':
+            cap = kwg[x]
+            y_cap = np.linspace(cap, cap, len(ticks))
+            plt.plot(ticks, y_cap, '--', linewidth=2, label='配电容量')
+        if x == 'load':
+            load = kwg[x]
+            plt.plot(ticks, load, label='负载功率')
+    plt.rcParams['font.sans-serif'] = ['SimHei'] #用来正常显示中文标签
+    plt.rcParams['axes.unicode_minus'] = False #用来正常显示负号
+
+    plt.xlabel('时间轴') 
+    plt.ylabel('功率(kW)')
+    plt.title("功率图")
+    plt.legend(loc='upper right')
+    if is_save == True:
+        plt.savefig(figure_output, dpi=128)
+    plt.show()
     
 def deal_err(msg):
     print(msg)

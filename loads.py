@@ -116,7 +116,7 @@ def main():
     file_input = 'data_temp/charging_data1.csv'  
     sys_settings = Settings() 
     
-    ticks_max = sys_settings.sample_interval * 2 #24h
+    ticks_max = sys_settings.sample_interval * 8 #24h
     
     grid0 = Grid(ticks_max) #创建电网侧负荷对象，仅考虑配电参数限制
     
@@ -139,6 +139,7 @@ def main():
     ticks_test4 = 210
     ticks_test6 = 800
     ticks_test5 = 1500
+    ticks_test7 = 300
     for i in range(1, ticks_max):
         if (load_total.input_mode == 'in'):
             if i == ticks_test1:
@@ -183,7 +184,15 @@ def main():
                 #if load8.load_pre.chargers_iswork[load8.load_num] == 1:
                 #    load_total.chargers_iswork[load8.load_num] == 1
                 print('sys_ticks = ' + str(i), load_total.chargers_iswork)
-                
+            if i == ticks_test7:
+                num, num1, num2 = 3,6,9
+                load3 = Loads(sys_settings, num)
+                load3.loading(load_total, ticks_test7)#, file_input)
+                load6 = Loads(sys_settings, num1)
+                load6.loading(load_total, ticks_test7)
+                load9 = Loads(sys_settings, num2)
+                load9.loading(load_total, ticks_test7)
+                print('sys_ticks = ' + str(i), load_total.chargers_iswork)
             if i == 120:
                 load2.loads_off(load_total, i)
                 print('sys_ticks = ' + str(i), load_total.chargers_iswork)
@@ -206,8 +215,12 @@ def main():
         fitting.sys_fitting(i, ebox, load_t)
         i += 1
         
-    fp.draw_plot(load_total.load_t, True, figure_output='program_output/load_total.jpg',
-                     y_axis=load_total.l_name)#, x_axis='time')
+    fp.draw_power_plot(load_total.load_t.index, True, figure_output='program_output/load_total.jpg',
+                       load=list(load_total.load_t[load_total.l_name]), 
+                       cap=grid0.cap_limit)
+    fp.draw_power_plot(fitting.data.index, True, figure_output='program_output/fitting.jpg',
+                       load=list(fitting.data[fitting.g_name]), 
+                       cap=grid0.cap_limit)
     fp.write_file(load_total.load_t, 'program_output/load_total.csv')
     fp.write_file(fitting.data, 'program_output/outputdata.xls')
 

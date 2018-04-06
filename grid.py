@@ -31,7 +31,7 @@ class Grid():
         self.trans_cap = 350 #kw
         self.trans_rate = 0.8
         self.cap_limit = self.trans_cap * self.trans_rate       
-        self.xtg = True #是否允许电网回馈
+        self.xtg = False #是否允许电网回馈
 
         #时间序列按采样周期赋值
         if data_lens <= 87600: #最高采样周期3600/h

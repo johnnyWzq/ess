@@ -8,6 +8,7 @@ Created on Tue Mar 27 08:53:26 2018
 
 import pandas as pd
 import datetime
+import time
 import link_list as ll
 
 class Loadtotal():
@@ -27,13 +28,16 @@ class Loadtotal():
         
         #时间序列按采样周期赋值
         if data_lens <= 87600: #最高采样周期3600/h
-            dlt = float(86400/data_lens)
+            dlt = int(86400/data_lens)
             now_time = datetime.timedelta(seconds=1)
             tl = []
             for index in self.load_t.index:
-                tl.append(now_time)
+                #tl.append(now_time)
                 now_time = now_time + datetime.timedelta(seconds = dlt)
-            
+                t = str(now_time)               
+                if t.find('1 day') != -1:
+                    t = t.lstrip('1 day,')
+                tl.append(t)
             self.load_t['time'] = tl
          
         self.initialize_dynamic_settings(col_num)
