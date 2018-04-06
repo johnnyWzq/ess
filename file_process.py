@@ -121,10 +121,11 @@ def draw_power_plot(ticks, is_save=False, figure_output='data_load/loads.jpg', *
             cap = kwg[x]
             y_cap = np.linspace(cap, cap, len(ticks))
             plt.plot(ticks, y_cap, '--', linewidth=2, label='配电容量')
-        if x == 'load':
-            load = kwg[x]
-            
-            plt.plot(ticks, load, label='负载功率')
+        if x == 'y_axis':                                     
+            y_axis = kwg[x]
+        if x == 'x_axis':
+            x_axis = kwg[x]
+            plt.plot(x_axis, y_axis, label='负载功率')
     plt.rcParams['font.sans-serif'] = ['SimHei'] #用来正常显示中文标签
     plt.rcParams['axes.unicode_minus'] = False #用来正常显示负号
 

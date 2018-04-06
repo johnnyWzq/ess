@@ -127,7 +127,7 @@ def main():
     ebox = Energybox(sys_settings.sample_interval)
     
     fitting = FittingDevice(ebox, grid0, ticks_max)
-    fitting.set_targe('day_cost')
+    fitting.set_targe('normal')
     
     print("sys_ticks init:"+str(load_total.chargers_iswork))
     
@@ -216,14 +216,20 @@ def main():
         i += 1
         
     fp.draw_power_plot(load_total.load_t.index, True, figure_output='program_output/load_total.jpg',
-                       load=list(load_total.load_t[load_total.l_name]), 
+                       y_axis=list(load_total.load_t[load_total.l_name]), x_axis=list(load_total.load_t.index),
                        cap=grid0.cap_limit)
+    l = fitting.data[fitting.g_name]
+    l = l[l.notnull()]
+    x = list(l.index)
+    y = list(l)
     fp.draw_power_plot(fitting.data.index, True, figure_output='program_output/fitting.jpg',
-                       load=list(fitting.data[fitting.g_name]), 
+                       y_axis=y, x_axis=x, 
                        cap=grid0.cap_limit)
     fp.write_file(load_total.load_t, 'program_output/load_total.csv')
     fp.write_file(fitting.data, 'program_output/outputdata.xls')
-    print(sum(fitting.data['bills']))
+    b = fitting.data['bills']
+    b = b[b.notnull()]
+    print(sum(b))
     #grid0.draw()
     
 if __name__ == '__main__':

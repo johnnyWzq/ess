@@ -29,7 +29,7 @@ class FittingDevice():
         self.load_ticks_max = data_lens
         self.data['index'] = range(self.load_ticks_max)
         self.data = self.data.set_index(['index'])
-        self.data = self.data.fillna(0)
+        #self.data = self.data.fillna(0)
         self.data['price_coe'] = grid.grid_data['price_coe']
         
         self.trans_cap = grid.cap_limit
@@ -169,7 +169,7 @@ class FittingDevice():
         self.data.loc[ticks, ['load_origin']] = self.load_origin
         self.data.loc[ticks, ['load_regular']] = self.load_regular
         self.data.loc[ticks, ['delta_load']] = self.delta_load
-        self.data.loc[ticks, ['bills']] = self.grid_value * self.price
+        self.data.loc[ticks, ['bills']] = self.grid_value * self.price / self.ebx_min_cd_interval_ticks
         self.grid_cost_t = self.grid_value * self.price
         self.ebx_work_state = self.data.loc[ticks, ['work_state']]
         if self.ebx_work_state[0] == 'charge':
