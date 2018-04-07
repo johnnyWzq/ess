@@ -106,42 +106,21 @@ def main():
 
     from ess_settings import Settings
     
-    import sys_control as sc
-
-    from load_total import Loadtotal
-    from grid import Grid
-    from energy_box import Energybox
-    from fitting_device import FittingDevice
-    
-    file_input = 'data_temp/charging_data1.csv'  
     sys_settings = Settings() 
     
     ticks_max = sys_settings.sample_interval * 8 #24h
-    
-    grid0 = Grid(ticks_max) #创建电网侧负荷对象，仅考虑配电参数限制
-    
-    grid0.get_power_price_data(fp.read_load_file(0,'data/price.xls'))
 
     load_total = Loadtotal(ticks_max, sys_settings.chargers_num) #创建代表总负载的dataframe
-    
-    ebox = Energybox(sys_settings.sample_interval)
-    
-    fitting = FittingDevice(ebox, grid0, ticks_max)
-    fitting.set_targe('normal')
+
     
     print("sys_ticks init:"+str(load_total.chargers_iswork))
     
     
     
     ticks_test1 = 1
-    ticks_test2 = 50
-    ticks_test3 = 200
-    ticks_test4 = 210
-    ticks_test6 = 800
-    ticks_test5 = 1500
+    ticks_test2 = 100
     ticks_test7 = 300
     for i in range(1, ticks_max):
-        if (load_total.input_mode == 'in'):
             if i == ticks_test1:
                 num = 1
                 load = Loads(sys_settings, num)
@@ -157,32 +136,6 @@ def main():
                 #if load2.load_pre.chargers_iswork[load2.load_num] == 1:
                 #    load_total.chargers_iswork[load2.load_num] == 1
                 #loads_link.append(load2)
-                print('sys_ticks = ' + str(i), load_total.chargers_iswork)
-            if i == ticks_test3:
-                num = 4
-                load_test = Loads(sys_settings, num)
-                load_test.loading(load_total, ticks_test3)#, file_input)
-               # if load_test.load_pre.chargers_iswork[load_test.load_num] == 1:
-                #    load_total.chargers_iswork[load_test.load_num] == 1
-                #loads_link.append(load_test)
-                print('sys_ticks = ' + str(i), load_total.chargers_iswork)
-            if i == ticks_test4:
-                load.loading(load_total, ticks_test4)#, file_input)
-                #if load.load_pre.chargers_iswork[load.load_num] == 1:
-               #     load_total.chargers_iswork[load.load_num] == 1
-                print('sys_ticks = ' + str(i), load_total.chargers_iswork)
-            if i == ticks_test5:
-                load.loading(load_total, ticks_test5)#, file_input)
-                #if load.load_pre.chargers_iswork[load.load_num] == 1:
-                #    load_total.chargers_iswork[load.load_num] == 1
-    
-                print('sys_ticks = ' + str(i), load_total.chargers_iswork)
-            if i == ticks_test6:
-                load8 = Loads(sys_settings, 8)
-                load8.loading(load_total, ticks_test6)#, file_input)
-                #loads_link.append(load8)
-                #if load8.load_pre.chargers_iswork[load8.load_num] == 1:
-                #    load_total.chargers_iswork[load8.load_num] == 1
                 print('sys_ticks = ' + str(i), load_total.chargers_iswork)
             if i == ticks_test7:
                 num, num1, num2 = 3,6,9
@@ -202,35 +155,7 @@ def main():
                ld.data.loads_update(load_total, i)
                ld = ld.next
         
-        load_total.loads_value_update(i)
-        load_total.load_t = sc.loads_calc(i, load_total.load_t,
-                                     load_total.l_name, sys_settings.load_regular)
-        """
-        grid0.grid_data = sc.grid_calc(i, grid0, load_total.load_t,
-                                      add1_col=grid0.l_name, add2_col=load_total.l_name,
-                                      sys_s=sys_settings)
-        """
-        load_t = load_total.load_t.loc[i, [load_total.l_name]]
-        load_t = load_t[0]
-        fitting.sys_fitting(i, ebox, load_t)
-        i += 1
-        
-    fp.draw_power_plot(load_total.load_t.index, True, figure_output='program_output/load_total.jpg',
-                       y_axis=list(load_total.load_t[load_total.l_name]), x_axis=list(load_total.load_t.index),
-                       cap=grid0.cap_limit)
-    l = fitting.data[fitting.g_name]
-    l = l[l.notnull()]
-    x = list(l.index)
-    y = list(l)
-    fp.draw_power_plot(fitting.data.index, True, figure_output='program_output/fitting.jpg',
-                       y_axis=y, x_axis=x, 
-                       cap=grid0.cap_limit)
-    fp.write_file(load_total.load_t, 'program_output/load_total.csv')
-    fp.write_file(fitting.data, 'program_output/outputdata.xls')
-    b = fitting.data['bills']
-    b = b[b.notnull()]
-    print(sum(b))
-    #grid0.draw()
+
     
 if __name__ == '__main__':
     main()

@@ -18,7 +18,7 @@ class FittingDevice():
         self.fitting = False
         col_list = ['Gn', 'load_origin', 'delta_load', 'load_regular',
                     'fit_power', 'work_state', 'rate', 'iswork', 
-                     'SOE',  'delta_energy', 'bills', 'price_coe']
+                     'SOE',  'delta_energy', 'bills_regular', 'bills_origin', 'price_coe']
         #delta_energy充为正，放为负
         #load_origin为原始负载，load_regular为需要调整对负载，变化代表要对负载进行调节
         #col_list.insert(0, 'time')#增加时间列
@@ -38,7 +38,7 @@ class FittingDevice():
         
         self.delta_load = 0 #正为减负载，负为加负载
         self.load_regular_enable = True #允许调节负载
-        self.lte = True #允许负载放电
+        self.lte = False #允许负载放电
         
         self.ebx_soe = ebx.soe_min#ebx.soe
         self.ebx_soe_max = ebx.soe_max
@@ -74,7 +74,7 @@ class FittingDevice():
             if x == 'price':
                 self.data['price_coe'] = kwg[x]
 
-    def set_targe(self, targe):
+    def set_settings(self, targe='day_cost', load_regular_enable=True, lte=False):
         """
         targe:
             day_cost当天收益最大化
@@ -82,7 +82,8 @@ class FittingDevice():
             normal只补充配电不足
         """
         self.targe = targe
-        
+        self.load_regular_enable = load_regular_enable
+        self.lte = lte
     def update_ess_value(self, ticks, ebx):
         """
         更新ess设备相关参数
@@ -169,12 +170,13 @@ class FittingDevice():
         self.data.loc[ticks, ['load_origin']] = self.load_origin
         self.data.loc[ticks, ['load_regular']] = self.load_regular
         self.data.loc[ticks, ['delta_load']] = self.delta_load
-        self.data.loc[ticks, ['bills']] = self.grid_value * self.price / self.ebx_min_cd_interval_ticks
+        self.data.loc[ticks, ['bills_regular']] = self.grid_value * self.price / self.ebx_min_cd_interval_ticks
+        self.data.loc[ticks, ['bills_origin']] = self.load_origin * self.price / self.ebx_min_cd_interval_ticks
         self.grid_cost_t = self.grid_value * self.price
         self.ebx_work_state = self.data.loc[ticks, ['work_state']]
         if self.ebx_work_state[0] == 'charge':
             self.data.loc[ticks, ['rate']] = self.ebx_charge_rate
-            self.data.loc[ticks, ['fit_power']] = self.ebx_charge_power
+            self.data.loc[ticks, ['fit_power']] = 0-self.ebx_charge_power
             self.data.loc[ticks, ['delta_energy']] = self.ebx_charge_energy_allow_bk
         elif self.ebx_work_state[0] == 'discharge':
             self.data.loc[ticks, ['rate']] = self.ebx_discharge_rate
@@ -182,6 +184,8 @@ class FittingDevice():
             self.data.loc[ticks, ['delta_energy']] = self.ebx_discharge_energy_allow_bk
         else:
             self.data.loc[ticks, ['rate']] = 0
+            self.data.loc[ticks, ['fit_power']] = 0
+            self.data.loc[ticks, ['delta_energy']] = 0
         if self.ebx_input_mode == 'in':
             self.data.loc[ticks, ['iswork']] = self.ebx_active
             self.data.loc[ticks, ['SOE']] = self.ebx_soe
