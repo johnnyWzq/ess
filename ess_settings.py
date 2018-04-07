@@ -11,13 +11,13 @@ class Settings():
     存储储能系统中对所有设置
     '''
     
-    def __init__(self):
+    def __init__(self, charges_num=10, sample_interval=250):
         '''初始化'''
         
         #选择哪个参数计算
         self.calc_para = 'power'
         #充电桩设置
-        self.chargers_num = 10
+        self.chargers_num = charges_num
     #    self.charger_pout_max = 50
         #逆变器设置
         self.pcs_nums = 1
@@ -28,7 +28,7 @@ class Settings():
         #其他设置
         self.power_lose = 0
         #系统采样时间为1S，1小时3600个采样点，允许最高采样频率
-        self.sample_interval = 250
+        self.sample_interval = sample_interval
         
         self.initialize_dynamic_settings()
         

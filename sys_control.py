@@ -25,9 +25,27 @@ def loads_calc(sys_ticks, load_pre_data, l_name, load_regular, input_mode='in'):
         data = load_pre_data
     return data
 
+def loads_regular(sys_ticks, load_total, maxlen):
+    
+    ld = load_total.loads_link.head
+    while ld != 0:
+        if ld.data.regular == True:
+            d= ld.data.load_data.loc[sys_ticks:, [ld.data.sys_settings.calc_para]]
+            d = list(d[ld.data.sys_settings.calc_para])
+            delta_energy = sum(d)
+            re_ticks = int(sys_ticks + delta_energy/ld.data.regular_power)
+            if re_ticks > maxlen:
+                re_ticks = maxlen    
+            ld.data.end_tick = re_ticks
+            load_total.loads_value_update(sys_ticks, end_index=re_ticks,
+                                  power=ld.data.regular_power, 
+                                  load_name='p'+str(ld.data.load_num))
+            ld.data.regular = False
+        ld = ld.next
+
 def grid_calc(sys_ticks, grid, load_data, **kwg):
     '''
-    计算当前时刻值行的电网侧输出功率值，并计算截止到当前时刻合计的电费
+    计算当前时刻值行的电网侧输出功率值
     使用方式：按指定的频率循环调用
     sys_ticks为系统运行至当前采样数,待计算行
 

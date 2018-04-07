@@ -236,10 +236,13 @@ def data_col_rename(data, n, re):
 
 def data_merge(df1, df2, **kwg):
     select = 0
+    value = None
     for x in kwg:
         if x == 'col_name':
             col_name = kwg[x]
             if col_name in df1.columns:
+                if df2.index[0] > 0:
+                    value = df1.loc[0:df2.index[0]-1, [col_name]]
                 df1 = df1.drop(col_name, 1)#删除指定列负载数据
         if x == 'col_list':
             col_list = kwg[x]
@@ -249,10 +252,11 @@ def data_merge(df1, df2, **kwg):
         #留下col_list列表中的负载数据
         result = result[col_list]
     result = result.fillna(0)
+    result.loc[0:df2.index[0]-1, [col_name]] = value
     return result
 
-def data_del_col(df, col_name):
-    df[col_name] = 0
+def data_del_col(ticks, df, col_name):
+    df.loc[ticks:, [col_name]] = 0
     return df
     
 def data_single_row_add(ticks, df, l_name, regularlist):

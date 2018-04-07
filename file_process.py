@@ -250,8 +250,8 @@ def draw_all(cap, grid_origin, grid_regular, load_origin, load_regular,
     ax2.set_ylabel('功率(kW)')
     ax2.set_title('调整后电力功率曲线')  
     
-    ax3.plot(x_axis, load_origin, color='blueviolet', label='原负载')
-    ax3.plot(x_axis, load_regular, color='dodgerblue', label='调整后负载')
+    ax3.plot(x_axis, load_origin, color='dodgerblue', label='原负载')
+    ax3.plot(x_axis, load_regular, color='silver', label='调整后负载')
     ax3.set_ylim(0, np.max(load_origin)+20)
     ax3.set_xlim(0, x_axis_len)
     ax3.grid(linestyle=':')

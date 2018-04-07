@@ -68,6 +68,8 @@ class FittingDevice():
         self.input_condition()
         self.price_describe()
         
+        self.active = 'enable'
+        
     def input_condition(self, **kwg):
 
         for x in kwg:
@@ -84,6 +86,9 @@ class FittingDevice():
         self.targe = targe
         self.load_regular_enable = load_regular_enable
         self.lte = lte
+    def set_on_off(self, command=True):
+        self.active = command
+        
     def update_ess_value(self, ticks, ebx):
         """
         更新ess设备相关参数
@@ -204,21 +209,22 @@ class FittingDevice():
 
         self.update_ess_value(ticks, ebx)
 
-        self.ebx_min_cd_interval -= 1
-        if self.ebx_min_cd_interval > 0:
-            return
-        else:#到了ebx可以调整的时刻
-            self.ebx_min_cd_interval = self.ebx_min_cd_interval_bk
-            #更新时间片内对值
-            #start = ticks + 1 - self.ebx_min_cd_interval
-            #end = ticks - 1
-            #if self.grid_cost_t != None:
-             #   self.data.loc[start:end, ['bills']] = self.grid_cost_t
-            #如果使能了day_cost模式
-            if self.targe == 'day_cost':
-                self.day_cost_algorithm1(ticks)
-            if self.targe == 'normal':
-                self.normal_algorithm(ticks)
+        if self.active == 'enable':
+            self.ebx_min_cd_interval -= 1
+            if self.ebx_min_cd_interval > 0:
+                return
+            else:#到了ebx可以调整的时刻
+                self.ebx_min_cd_interval = self.ebx_min_cd_interval_bk
+                #更新时间片内对值
+                #start = ticks + 1 - self.ebx_min_cd_interval
+                #end = ticks - 1
+                #if self.grid_cost_t != None:
+                 #   self.data.loc[start:end, ['bills']] = self.grid_cost_t
+                #如果使能了day_cost模式
+                if self.targe == 'day_cost':
+                    self.day_cost_algorithm1(ticks)
+                if self.targe == 'normal':
+                    self.normal_algorithm(ticks)
         
         self.update_value(ticks)#更新各值
                 
