@@ -33,13 +33,16 @@ def loads_regular(sys_ticks, load_total, maxlen):
             d= ld.data.load_data.loc[sys_ticks:, [ld.data.sys_settings.calc_para]]
             d = list(d[ld.data.sys_settings.calc_para])
             delta_energy = sum(d)
-            re_ticks = int(sys_ticks + delta_energy/ld.data.regular_power)
+            if ld.data.regular_power == 0:
+                re_ticks = ld.data.end_tick
+            else:
+                re_ticks = int(sys_ticks + delta_energy/ld.data.regular_power)
             if re_ticks > maxlen:
                 re_ticks = maxlen    
             ld.data.end_tick = re_ticks
             load_total.loads_value_update(sys_ticks, end_index=re_ticks,
                                   power=ld.data.regular_power, 
-                                  load_name='p'+str(ld.data.load_num))
+                                  load_name=ld.data.name)
             ld.data.regular = False
         ld = ld.next
 

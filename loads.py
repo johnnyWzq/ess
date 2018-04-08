@@ -69,17 +69,19 @@ class Loads():
             #按负载编号重命名数据calc_para列
             data = dp.data_col_rename(self.load_data,
                                self.sys_settings.calc_para, 'p'+str(self.load_num))
+            self.name = 'p'+str(self.load_num)
+            #self.min_power = max(data[self.name])/5 #调节功率的最小功率
             
             self.end_tick = sys_ticks + len(data) #负载失效时刻
             #与load_pre合并
             load_cur = load_total.load_t[:]
             load_total.load_t = dp.data_merge(load_cur, data,
-                    col_name='p'+str(self.load_num), col_list=load_total.col_list)
+                    col_name=self.name, col_list=load_total.col_list)
             load_total.load_t_bk = load_total.load_t
             load_total.loads_link.append(self)
             load_total.loads_state_update(self.load_num, self.state)
             fp.output_msg('sys_ticks = ' + str(sys_ticks) + ' The load' 
-                          + str(self.load_num) + ' is on.')
+                          + self.name + ' is on.')
         else:
             fp.output_msg('sys_ticks = ' + str(sys_ticks)
             + " The load's data has not loading because of the load already exists!")
@@ -91,7 +93,7 @@ class Loads():
         #更新state
         self.state = False
         #self.load_pre.update_settings(self.load_num, 'off')
-        load_total.load_t = dp.data_del_col(sys_ticks, load_total.load_t, 'p'+str(self.load_num))
+        load_total.load_t = dp.data_del_col(sys_ticks, load_total.load_t, self.name)
         load_total.loads_link.delete(load_total.loads_link.index(self))
         load_total.loads_state_update(self.load_num, self.state)
         fp.output_msg('sys_ticks = ' + str(sys_ticks) + " The load" + str(self.load_num) + " is off.")
