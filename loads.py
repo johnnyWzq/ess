@@ -69,13 +69,15 @@ class Loads():
             #按负载编号重命名数据calc_para列
             data = dp.data_col_rename(self.load_data,
                                self.sys_settings.calc_para, 'p'+str(self.load_num))
+            self.name = 'p'+str(self.load_num)
+            self.min_power = max(data[self.name])/5 #调节功率的最小功率
             
             self.end_tick = sys_ticks + len(data) #负载失效时刻
             #与load_pre合并
             load_cur = load_total.load_t[:]
             load_total.load_t = dp.data_merge(load_cur, data,
-                    col_name='p'+str(self.load_num), col_list=load_total.col_list)
-            load_total.load_t_bk = load_total.load_t
+                    col_name=self.name, col_list=load_total.col_list)
+            load_total.load_t_bk[self.name] = load_total.load_t[self.name]
             load_total.loads_link.append(self)
             load_total.loads_state_update(self.load_num, self.state)
             fp.output_msg('sys_ticks = ' + str(sys_ticks) + ' The load' 
@@ -91,7 +93,8 @@ class Loads():
         #更新state
         self.state = False
         #self.load_pre.update_settings(self.load_num, 'off')
-        load_total.load_t = dp.data_del_col(sys_ticks, load_total.load_t, 'p'+str(self.load_num))
+        load_total.load_t = dp.data_del_col(sys_ticks, load_total.load_t, self.name)
+        load_total.load_t_bk[self.name] = load_total.load_t[self.name]
         load_total.loads_link.delete(load_total.loads_link.index(self))
         load_total.loads_state_update(self.load_num, self.state)
         fp.output_msg('sys_ticks = ' + str(sys_ticks) + " The load" + str(self.load_num) + " is off.")
@@ -121,7 +124,7 @@ def main():
     
     
     
-    ticks_test1 = 1
+    ticks_test1 = 10
     ticks_test2 = 100
     ticks_test3 = 300
     ticks_test4 = 500
@@ -165,6 +168,7 @@ def main():
             print('sys_ticks = ' + str(i), load_total.chargers_iswork)
         
         if i == 400:
+            #load_total.load_t_bk = load_total.load_t.copy()
             load3.regular_power = 50
             load3.regular = True
 
@@ -173,10 +177,12 @@ def main():
            ld.data.loads_update(load_total, i)
            ld = ld.next
         load_total.loads_value_update(i)
-        load_total.load_t = sc.loads_calc(i, load_total.load_t,
-                                     load_total.l_name, sys_settings.load_regular)
+        load_total.load_t = sc.loads_calc(i, load_total.load_t, load_total.l_name)
+        load_total.load_t_bk = sc.loads_calc(i, load_total.load_t_bk, load_total.l_name)
         sc.loads_regular(i, load_total, ticks_max)
+        
     fp.write_file(load_total.load_t, 'program_output/load_total.xls')
+    fp.write_file(load_total.load_t_bk, 'program_output/load_total_bk.xls')
     fp.draw_power_plot(load_total.load_t.index, True, figure_output='program_output/load_total.jpg',
                    y_axis=list(load_total.load_t[load_total.l_name]), x_axis=list(load_total.load_t.index),
                    cap=200)

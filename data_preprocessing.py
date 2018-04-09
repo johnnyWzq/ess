@@ -259,14 +259,14 @@ def data_del_col(ticks, df, col_name):
     df.loc[ticks:, [col_name]] = 0
     return df
     
-def data_single_row_add(ticks, df, l_name, regularlist):
+def data_single_row_add(ticks, df, l_name):
     n = 0
     d_sum = 0.0
-    df0 = df[:]
+    #df0 = df[:].fillna(0)
     df0 = df.drop('time', 1)
     if ticks <= len(df0):
         for i in df0.iloc[ticks]:
-            d_sum += i * float(regularlist[n])
+            d_sum += i
             n += 1
         df0.loc[ticks, [l_name]] = d_sum
     df0['time'] = df['time']

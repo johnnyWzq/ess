@@ -252,6 +252,8 @@ def draw_all(cap, grid_origin, grid_regular, load_origin, load_regular,
     
     ax3.plot(x_axis, load_origin, color='dodgerblue', label='原负载')
     ax3.plot(x_axis, load_regular, color='silver', label='调整后负载')
+    #ax3.fill_between(x_axis, load_origin, load_regular, where=load_regular >= load_origin, facecolor='red', interpolate=True, alpha=0.5,)
+    ax3.fill_between(x_axis, load_regular, load_origin, where=load_regular >= load_origin, facecolor='dodgerblue', interpolate=True, alpha=0.3,)
     ax3.set_ylim(0, np.max(load_origin)+20)
     ax3.set_xlim(0, x_axis_len)
     ax3.grid(linestyle=':')

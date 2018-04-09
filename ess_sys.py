@@ -111,8 +111,8 @@ def main():
                ld = ld.next
         
         load_total.loads_value_update(i)
-        load_total.load_t = sc.loads_calc(i, load_total.load_t,
-                                     load_total.l_name, sys_settings.load_regular)
+        load_total.load_t = sc.loads_calc(i, load_total.load_t, load_total.l_name)
+        load_total.load_t_bk = sc.loads_calc(i, load_total.load_t_bk, load_total.l_name)
         """
         grid0.grid_data = sc.grid_calc(i, grid0, load_total.load_t,
                                       add1_col=grid0.l_name, add2_col=load_total.l_name,
@@ -120,13 +120,11 @@ def main():
         """
         load_t = load_total.load_t.loc[i, [load_total.l_name]]
         load_t = load_t[0]
-        fitting.sys_fitting(i, ebox, load_t)
+
+        fitting.sys_fitting(i, ebox, load_t, load_total)
+        sc.loads_regular(i, load_total, ticks_max)
         i += 1
-        
-    fp.draw_power_plot(load_total.load_t.index, True, figure_output='program_output/load_total.jpg',
-                       y_axis=list(load_total.load_t[load_total.l_name]), x_axis=list(load_total.load_t.index),
-                       cap=grid0.cap_limit)
-   
+
     load_origin = fitting.data['load_origin']
     load_origin = load_origin[load_origin.notnull()]
     load_origin = list(load_origin)
@@ -151,6 +149,11 @@ def main():
     
     x_axis = list(g_regular.index)
     x_axis_len = len(load_total.load_t)
+
+    '''
+    fp.draw_power_plot(load_total.load_t.index, True, figure_output='program_output/load_total.jpg',
+                       y_axis=list(load_total.load_t[load_total.l_name]), x_axis=list(load_total.load_t.index),
+                       cap=grid0.cap_limit)
     fp.draw_power_plot(fitting.data.index, True, figure_output='program_output/fitting.jpg',
                        y_axis=grid_regular, x_axis=x_axis, 
                        cap=grid0.cap_limit)
@@ -158,12 +161,14 @@ def main():
                        x1_axis=list(load_total.load_t.index), y1_axis=list(load_total.load_t[load_total.l_name]),
                        y2_axis=grid_regular, x2_axis=x_axis, 
                        cap=grid0.cap_limit)
-    
+    '''
+    figure_output = 'program_output/power-%s-%s'%(fitting.targe,str(fitting.load_regular_enable))
     fp.draw_all(grid0.cap_limit, load_origin, grid_regular, load_origin, load_regular,
              bill_origin, bill_regular, ebx_power, ebx_energy,
-             x_axis, x_axis_len, True)
-    fp.write_file(load_total.load_t, 'program_output/load_total.csv')
-    fp.write_file(fitting.data, 'program_output/outputdata.xls')
+             x_axis, x_axis_len, True, figure_output+'.jpg')
+    fp.write_file(load_total.load_t, 'program_output/load_total.xls')
+    fp.write_file(load_total.load_t_bk, 'program_output/load_total_bk.xls')
+    fp.write_file(fitting.data, figure_output+'.xls')
     b = fitting.data['bills_regular']
     b = b[b.notnull()]
     print(sum(b))

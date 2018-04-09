@@ -9,7 +9,7 @@ Created on Mon Mar 26 20:14:43 2018
 import data_preprocessing as dp
 
         
-def loads_calc(sys_ticks, load_pre_data, l_name, load_regular, input_mode='in'):
+def loads_calc(sys_ticks, load_pre_data, l_name, input_mode='in'):
     '''
     计算当前时刻值行的总负载值，并返回负载集
     使用方式：按指定的频率循环调用
@@ -19,8 +19,7 @@ def loads_calc(sys_ticks, load_pre_data, l_name, load_regular, input_mode='in'):
     input_mode为in代表数据从仿真系统文件来，out为外部接口采集获取
     '''
     if input_mode == 'in':
-        data = dp.data_single_row_add(sys_ticks, load_pre_data, 
-                                          l_name, load_regular)
+        data = dp.data_single_row_add(sys_ticks, load_pre_data, l_name)
     elif input_mode == 'out':
         data = load_pre_data
     return data
@@ -33,13 +32,16 @@ def loads_regular(sys_ticks, load_total, maxlen):
             d= ld.data.load_data.loc[sys_ticks:, [ld.data.sys_settings.calc_para]]
             d = list(d[ld.data.sys_settings.calc_para])
             delta_energy = sum(d)
-            re_ticks = int(sys_ticks + delta_energy/ld.data.regular_power)
+            if ld.data.regular_power == 0:
+                re_ticks = ld.data.end_tick
+            else:
+                re_ticks = int(sys_ticks + delta_energy/ld.data.regular_power)
             if re_ticks > maxlen:
                 re_ticks = maxlen    
             ld.data.end_tick = re_ticks
             load_total.loads_value_update(sys_ticks, end_index=re_ticks,
                                   power=ld.data.regular_power, 
-                                  load_name='p'+str(ld.data.load_num))
+                                  load_name=ld.data.name)
             ld.data.regular = False
         ld = ld.next
 
