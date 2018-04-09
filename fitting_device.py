@@ -8,8 +8,6 @@ import pandas as pd
 import scipy.signal
 
 import file_process as fp
-import data_preprocessing as dp
-import sys_control as sc
 
 class FittingDevice():
     
@@ -261,15 +259,9 @@ class FittingDevice():
             self.data.loc[ticks, ['work_state']] = 'charge'
             self.next_energy_calc('charge')
 
-        if self.trans_cap < self.load_origin:
-            if self.ebx_soe > self.ebx_soe_min:
-                self.data.loc[ticks, ['work_state']] = 'discharge'
-                self.next_energy_calc('discharge')
-
         if self.ebx_soe < self.ebx_soe_nominal and self.price < self.discharge_price and self.trans_cap > self.load_origin:
             self.data.loc[ticks, ['work_state']] = 'charge'
             self.next_energy_calc('charge')
-  
             
     def day_cost_algorithm(self, ticks):
         """
@@ -339,18 +331,7 @@ class FittingDevice():
             self.ebx_charge_power = min(self.ebx_charge_power,
                                            self.trans_cap)
             self.ebx_charge_energy_allow = self.ebx_charge_power / self.ebx_min_cd_interval_ticks
-        '''
-        if (self.ebx_discharge_power+self.trans_cap) < self.load_origin:
-            
-            if self.load_regular_enable == True:
-                if self.targe == 'normal':
-                    self.load_regular_algorithm_normal(ticks)
-                elif self.targe == 'day_cost':
-                    self.load_regular_algorithm_profit(ticks)
-            else:
-                #需要提高放电倍率
-                    self.cd_rate_regular()
-         '''   
+
     def next_energy_calc(self, work_state):
         """
         计算下一次允许充放对能量
@@ -423,8 +404,10 @@ class FittingDevice():
         调节充放电倍率
         """
         if self.trans_cap < self.load_origin:
-            self.delta_power = self.load_origin - self.trans_cap
-            self.ebx_discharge_rate = self.delta_power / self.ebx_cap
+            delta_power = self.load_origin - self.trans_cap
+            self.ebx_discharge_rate = delta_power / self.ebx_cap
+            if self.ebx_discharge_rate > self.ebx_discharge_rate_bk:
+                self.ebx_discharge_rate = (self.ebx_discharge_rate_bk + self.ebx_discharge_rate) / 2#逐渐增大倍率
         else:
             self.ebx_discharge_rate = self.ebx_discharge_rate_bk
         
