@@ -9,7 +9,7 @@ Created on Mon Mar 26 20:14:43 2018
 import data_preprocessing as dp
 
         
-def loads_calc(sys_ticks, load_pre_data, l_name, load_regular, input_mode='in'):
+def loads_calc(sys_ticks, load_pre_data, l_name, input_mode='in'):
     '''
     计算当前时刻值行的总负载值，并返回负载集
     使用方式：按指定的频率循环调用
@@ -19,8 +19,7 @@ def loads_calc(sys_ticks, load_pre_data, l_name, load_regular, input_mode='in'):
     input_mode为in代表数据从仿真系统文件来，out为外部接口采集获取
     '''
     if input_mode == 'in':
-        data = dp.data_single_row_add(sys_ticks, load_pre_data, 
-                                          l_name, load_regular)
+        data = dp.data_single_row_add(sys_ticks, load_pre_data, l_name)
     elif input_mode == 'out':
         data = load_pre_data
     return data
