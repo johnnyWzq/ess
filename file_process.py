@@ -225,9 +225,9 @@ def draw_all(cap, grid_origin, grid_regular, load_origin, load_regular,
     ax5 = plt.subplot(gs[0, -1], facecolor='#383737')
     ax6 = plt.subplot(gs[1, -1], facecolor='#383737')
     
-    ax1.plot(x_axis, grid_origin, color='greenyellow', alpha=1,linewidth=0.6, label='电力负荷')
+    ax1.plot(x_axis, grid_origin, color='greenyellow', alpha=1,linewidth=1, label='电力负荷')
     y_cap = np.linspace(cap, cap, len(x_axis))
-    ax1.plot(x_axis, y_cap, 'r--', linewidth=1, label='配电容量')
+    ax1.plot(x_axis, y_cap, 'r--', linewidth=1.2, label='配电容量')
     '''
     ax1.annotate('配电容量', xy=(2, 1), xytext=(3, 4),
             arrowprops=dict(facecolor='black', shrink=0.05))
@@ -239,9 +239,9 @@ def draw_all(cap, grid_origin, grid_regular, load_origin, load_regular,
     ax1.set_ylabel('功率(kW)')
     ax1.set_title('原电力功率曲线')
     
-    ax2.plot(x_axis, grid_regular, color='greenyellow', alpha=1, linewidth=0.6, label='电力负荷')
+    ax2.plot(x_axis, grid_regular, color='greenyellow', alpha=1, linewidth=1, label='电力负荷')
     y_cap = np.linspace(cap, cap, len(x_axis))
-    ax2.plot(x_axis, y_cap, color='r', linestyle='--', linewidth=1, label='配电容量')
+    ax2.plot(x_axis, y_cap, color='r', linestyle='--', linewidth=1.2, label='配电容量')
     ax2.set_ylim(0, np.max(grid_origin)+20)
     ax2.set_xlim(0, x_axis_len)
     ax2.grid(linestyle=':') #开启网格
@@ -249,11 +249,15 @@ def draw_all(cap, grid_origin, grid_regular, load_origin, load_regular,
     ax2.set_xlabel('时间轴') 
     ax2.set_ylabel('功率(kW)')
     ax2.set_title('调整后电力功率曲线')  
-    
+    '''
+    x = np.arange(0.0, 2, 0.01)
+    load_regular = np.sin(2*np.pi*x)
+    load_origin = 1.2*np.sin(4*np.pi*x)
+    '''
     ax3.plot(x_axis, load_origin, color='dodgerblue', label='原负载')
     ax3.plot(x_axis, load_regular, color='silver', label='调整后负载')
-    #ax3.fill_between(x_axis, load_origin, load_regular, where=load_regular >= load_origin, facecolor='red', interpolate=True, alpha=0.5,)
-    ax3.fill_between(x_axis, load_regular, load_origin, where=load_regular >= load_origin, facecolor='dodgerblue', interpolate=True, alpha=0.3,)
+    #ax3.fill_between(x_axis, load_regular, load_origin, facecolor='silver', where=load_regular>=load_origin, interpolate=True, alpha=0.5,)
+    #ax3.fill_between(x_axis, load_regular, load_origin, facecolor='dodgerblue', where=load_origin>load_regular, interpolate=True, alpha=0.3)
     ax3.set_ylim(0, np.max(load_origin)+20)
     ax3.set_xlim(0, x_axis_len)
     ax3.grid(linestyle=':')
@@ -261,7 +265,7 @@ def draw_all(cap, grid_origin, grid_regular, load_origin, load_regular,
     ax3.set_xlabel('时间轴') 
     ax3.set_ylabel('功率(kW)')
     ax3.set_title('负载功率曲线')  
-    
+
     ax4.plot(x_axis, ebx_power, 'greenyellow', alpha=1, linewidth=0.6, label='储能装置输出功率')
     ax4.fill_between(x_axis, 0, ebx_energy, color='green', alpha=0.85, label='储能装置输出功率储能装置剩余容量')
     ax4.set_ylim(0-np.max(ebx_power), np.max(ebx_power)*1.5)
@@ -296,7 +300,6 @@ def draw_all(cap, grid_origin, grid_regular, load_origin, load_regular,
     if is_save == True:
         plt.savefig(figure_output, dpi=128)
     plt.show()
-    
     
 def deal_err(msg):
     print(msg)

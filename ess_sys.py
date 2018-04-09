@@ -33,7 +33,7 @@ def main():
     ebox = Energybox(sys_settings.sample_interval)
     
     fitting = FittingDevice(ebox, grid0, ticks_max)
-    fitting.set_settings(targe='day_cost',
+    fitting.set_settings(targe='normal',
                       load_regular_enable=True,
                       lte=False)
     grid0.xtg = True
@@ -80,7 +80,7 @@ def main():
                #     load_total.chargers_iswork[load.load_num] == 1
                 print('sys_ticks = ' + str(i), load_total.chargers_iswork)
             if i == ticks_test5:
-                load.loading(load_total, ticks_test5)#, file_input)
+                load9.loading(load_total, ticks_test5)#, file_input)
                 #if load.load_pre.chargers_iswork[load.load_num] == 1:
                 #    load_total.chargers_iswork[load.load_num] == 1
     
