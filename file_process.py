@@ -213,9 +213,10 @@ def draw_all(cap, grid_origin, grid_regular, load_origin, load_regular,
              x_axis, x_axis_len,
              is_save=False, figure_output='program_output/power_all.jpg'):
 
-    plt.figure(edgecolor='k', figsize=(20, 15))
-    plt.rcParams['font.sans-serif'] = ['SimHei'] #用来正常显示中文标签
+    plt.rcParams['font.sans-serif'] = [u'SimHei'] #用来正常显示中文标签
     plt.rcParams['axes.unicode_minus'] = False #用来正常显示负号
+    plt.figure(edgecolor='k', figsize=(20, 15))
+    
     gs = GridSpec(2, 5)
     
     ax1 = plt.subplot(gs[0, 0:2], facecolor='#383737')
